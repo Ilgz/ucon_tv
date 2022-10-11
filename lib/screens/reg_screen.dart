@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_ucon/screens/reg_otp.dart';
 
 import '../utils/actionHandler.dart';
 
@@ -13,7 +14,7 @@ class _RegScreenState extends State<RegScreen> {
   List<FocusNode>? list;
   String phoneNumber = "+996  ";
   String billNumber = "";
-
+  List<String> digitList = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
   FocusNode submitButtonFocusNode = FocusNode();
   late FocusNode changeModeButtonFocusNode;
   int mode = 0;
@@ -36,10 +37,10 @@ class _RegScreenState extends State<RegScreen> {
           backgroundColor: Colors.transparent,
           body: HandleRemoteActionsWidget(
             child: Container(
-              margin: EdgeInsets.only(right: 50, bottom: 50),
+              margin: const EdgeInsets.only(right: 50, bottom: 50),
               alignment: Alignment.bottomRight,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 50),
+                padding: const EdgeInsets.symmetric(horizontal: 50),
                 decoration: BoxDecoration(
                     color: Colors.white54,
                     borderRadius: BorderRadius.circular(5)),
@@ -48,8 +49,8 @@ class _RegScreenState extends State<RegScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20.0, bottom: 10),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 20.0, bottom: 10),
                       child: Text("Авторизация",
                           style: TextStyle(
                               fontSize: 24, fontWeight: FontWeight.w500)),
@@ -60,25 +61,23 @@ class _RegScreenState extends State<RegScreen> {
                           mode == 0
                               ? "Введите номер мобильного телефона"
                               : "Введите номер лицевого счета",
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w400)),
                     ),
                     Container(
                       decoration: BoxDecoration(
                           color: Colors.white70,
-                          borderRadius: BorderRadius.circular(5)
-                      ),
-                      width:
-                          _textSize(mode == 0 ? "+996  709 872 197" : "228 777",
-                                          TextStyle(fontSize: 24))
-                              +
-                              40,
-
-                      padding: EdgeInsets.symmetric(vertical: 10,horizontal: 20),
+                          borderRadius: BorderRadius.circular(5)),
+                      width: _textSize(
+                              mode == 0 ? "+996  709 872 197" : "228 777",
+                              const TextStyle(fontSize: 24)) +
+                          40,
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                       child: Text(mode == 0 ? phoneNumber : billNumber,
-                          style: TextStyle(fontSize: 24)),
+                          style: const TextStyle(fontSize: 24)),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 10,
                     ),
                     Row(
@@ -88,6 +87,7 @@ class _RegScreenState extends State<RegScreen> {
                           for (int i = 0; i < list!.length; i++) ...[
                             digitWidget(i),
                           ],
+                          // digitWidget(0)
                         ]),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -117,10 +117,37 @@ class _RegScreenState extends State<RegScreen> {
                                     Text((" " * 10) + "Сменить" + (" " * 10))),
                           ),
                         ),
-                        SizedBox(
+                        const SizedBox(
                           width: 60,
                         ),
                         ClickRemoteActionWidget(
+                          enter: () {
+                            if (mode == 0) {
+                              if (phoneNumber.length == 17) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => const RegOtp()));
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text("Заполните поле полностью")));
+                              }
+                            } else {
+                              if (phoneNumber.length == 7) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => const RegOtp()));
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text("Заполните поле полностью")));
+                              }
+                            }
+                          },
                           left: () {
                             _changeFocus(context, changeModeButtonFocusNode);
                           },
@@ -149,50 +176,47 @@ class _RegScreenState extends State<RegScreen> {
     );
   }
 
-  Widget digitWidget(int i) {
+  Widget digitWidget(int index) {
     return ClickRemoteActionWidget(
-        one: ()=>_addDigit("1"),
-         two: ()=>_addDigit("2"),
-      three: ()=>_addDigit("3"),
-      four: ()=>_addDigit("4"),
-      five: ()=>_addDigit("5"),
-      six: ()=>_addDigit("6"),
-      seven: ()=>_addDigit("7"),
-      eight: ()=>_addDigit("8"),
-      nine: ()=>_addDigit("9"),
-      zero: ()=>
-        _addDigit("0")
-      ,
+        one: () => _addDigit("1"),
+        two: () => _addDigit("2"),
+        three: () => _addDigit("3"),
+        four: () => _addDigit("4"),
+        five: () => _addDigit("5"),
+        six: () => _addDigit("6"),
+        seven: () => _addDigit("7"),
+        eight: () => _addDigit("8"),
+        nine: () => _addDigit("9"),
+        zero: () => _addDigit("0"),
         down: () {
           _changeFocus(context, changeModeButtonFocusNode);
         },
         right: () {
-          if (i + 2 > list!.length) {
+          if (index + 2 > list!.length) {
             _changeFocus(context, list![0]);
           } else {
-            _changeFocus(context, list![i + 1]);
+            _changeFocus(context, list![index + 1]);
           }
         },
         left: () {
-          if (i == 0) {
+          if (index == 0) {
             _changeFocus(context, list![list!.length - 1]);
           } else {
-            _changeFocus(context, list![i - 1]);
+            _changeFocus(context, list![index - 1]);
           }
         },
         enter: () {
           if (mode == 0) {
-            if (i == 10) {
+            if (index == 10) {
               if (phoneNumber.length > 6) {
                 setState(() {
                   phoneNumber =
                       phoneNumber.substring(0, phoneNumber.length - 1);
-                  if(phoneNumber[phoneNumber.length-1]==" "){
-                    if(phoneNumber!="+996  "){
+                  if (phoneNumber[phoneNumber.length - 1] == " ") {
+                    if (phoneNumber != "+996  ") {
                       phoneNumber =
                           phoneNumber.substring(0, phoneNumber.length - 1);
                     }
-
                   }
                 });
               }
@@ -200,91 +224,90 @@ class _RegScreenState extends State<RegScreen> {
               setState(() {
                 if (phoneNumber.length < 17) {
                   if (phoneNumber.length == 9 || phoneNumber.length == 13) {
-                    phoneNumber += " " + i.toString();
+                    phoneNumber += " ${digitList[index]}";
                   } else {
-                    phoneNumber += i.toString();
+                    phoneNumber += digitList[index];
                   }
                 }
               });
             }
           } else {
-            if (i == 10) {
+            if (index == 10) {
               if (billNumber.length >= 1) {
                 setState(() {
-                  billNumber =
-                      billNumber.substring(0, billNumber.length - 1);
-                  if(billNumber.length!=0){
-                    if(billNumber[billNumber.length-1]==" "){
+                  billNumber = billNumber.substring(0, billNumber.length - 1);
+                  if (billNumber.length != 0) {
+                    if (billNumber[billNumber.length - 1] == " ") {
                       billNumber =
                           billNumber.substring(0, billNumber.length - 1);
                     }
                   }
-
                 });
               }
             } else {
               setState(() {
                 if (billNumber.length < 7) {
                   if (billNumber.length == 3) {
-                    billNumber += " " + i.toString();
+                    billNumber += " ${digitList[index]}";
                   } else {
-                    billNumber += i.toString();
+                    billNumber += digitList[index];
                   }
                 }
               });
             }
           }
         },
-        child: i == 10
+        child: index == 10
             ? Focus(
-                focusNode: list![i],
+                focusNode: list![index],
                 child: Container(
-                  padding: EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(10),
                   child: Icon(
                     Icons.backspace_outlined,
-                    color: list![i].hasFocus
+                    color: list![index].hasFocus
                         ? Colors.yellow.shade200
                         : Colors.black87,
                   ),
                 ))
             : Focus(
-                focusNode: list![i],
+                focusNode: list![index],
                 child: Container(
-                  padding: EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(10),
                   child: Text(
-                    i.toString(),
+                    digitList[index],
                     style: TextStyle(
-                        color: list![i].hasFocus
+                        color: list![index].hasFocus
                             ? Colors.yellow.shade200
                             : Colors.black87,
                         fontSize: 20),
                   ),
                 )));
   }
-  _addDigit(String digit){
-    if (mode == 0) {
-        setState(() {
-          if (phoneNumber.length < 17) {
-            if (phoneNumber.length == 9 || phoneNumber.length == 13) {
-              phoneNumber += " " + digit;
-            } else {
-              phoneNumber += digit;
-            }
-          }
-        });
-    } else {
 
-        setState(() {
-          if (billNumber.length < 7) {
-            if (billNumber.length == 3) {
-              billNumber += " " + digit;
-            } else {
-              billNumber += digit;
-            }
+  _addDigit(String digit) {
+    if (mode == 0) {
+      setState(() {
+        if (phoneNumber.length < 17) {
+          if (phoneNumber.length == 9 || phoneNumber.length == 13) {
+            phoneNumber += " " + digit;
+          } else {
+            phoneNumber += digit;
           }
-        });
+        }
+      });
+    } else {
+      setState(() {
+        if (billNumber.length < 7) {
+          if (billNumber.length == 3) {
+            billNumber += " " + digit;
+          } else {
+            billNumber += digit;
+          }
+        }
+      });
     }
   }
+
   _changeFocus(BuildContext context, FocusNode node) {
     FocusScope.of(context).requestFocus(node);
     setState(() {});
