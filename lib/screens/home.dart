@@ -1,7 +1,9 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:new_ucon/screens/search_home.dart';
 
+import '../constants.dart';
 import '../home/home_bloc.dart';
 import '../model/film.dart';
 import '../utils/actionHandler.dart';
@@ -17,11 +19,14 @@ class _HomePageState extends State<HomePage> {
   int activeIndex = 0;
   int lastFilmIndex= 0;
   int lastPremierIndex = 0;
+  int lastSerialIndex = 0;
   List<ScrollController> scrollController =
-      List.generate(2, (index) => ScrollController());
+      List.generate(3, (index) => ScrollController());
   FocusNode? sliderFocusNode;
   List<FocusNode>? premierFocusList;
   List<FocusNode>? filmFocusList;
+  List<FocusNode>? serialFocusList;
+  FocusNode searchFocus=FocusNode();
   CarouselController carouselController = CarouselController();
   ScrollController pageController=ScrollController();
   @override
@@ -51,88 +56,115 @@ class _HomePageState extends State<HomePage> {
               image: Image.asset('assets/images/background_home.jpg').image,
               fit: BoxFit.cover),
         ),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: SingleChildScrollView(
-            controller: pageController,
-            child: Column(
-              children: [
-                BlocBuilder<HomeBloc, HomeState>(
-                  builder: (context, state) {
-                    if (state is LoadHomeDataSuccessState) {
-                      return ClickRemoteActionWidget(
-                        right: () {
-                          setState(() {
-                            carouselController.nextPage(
-                                duration: Duration(milliseconds: 500));
-                          });
-                        },
-                        left: () {
-                          setState(() {
-                            carouselController.previousPage(
-                                duration: Duration(milliseconds: 500));
-                          });
-                        },
-                        down: () {
-                          if (premierFocusList != null) {
+          child: Scaffold(
+            appBar: AppBar(backgroundColor:const Color(0xff00001c),title:const Text("Фильм") ,actions: [
+              ClickRemoteActionWidget(
+                  enter: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>SearchHome()));
+                  },
+                  down: (){
+                    _changeFocus(context, sliderFocusNode!);
+                    pageController.animateTo(0, duration: Duration(milliseconds: 500), curve: Curves.fastOutSlowIn);
+                  },
+                  child:
+              Focus(
+                focusNode: searchFocus,
+                child: Icon(Icons.search,color: searchFocus.hasFocus?Colors.yellow:null,),
+              )
+              )
+            ]
+
+               ),
+
+            backgroundColor: Colors.transparent,
+            body: SingleChildScrollView(
+              controller: pageController,
+              child: Column(
+                children: [
+                  BlocBuilder<HomeBloc, HomeState>(
+                    builder: (context, state) {
+                      if (state is LoadHomeDataSuccessState) {
+                        return ClickRemoteActionWidget(
+                          up: (){
                             _changeFocus(
-                                context, premierFocusList![lastPremierIndex]);
-                          }
-                        },
-                        child: Focus(
-                          focusNode: sliderFocusNode,
-                          child: CarouselSlider.builder(
-                            carouselController: carouselController,
-                            options: CarouselOptions(
-                              height: 250,
-                              viewportFraction: 0.6,
-                              //     aspectRatio: 2,
-                              //  autoPlay: true,
-                              enableInfiniteScroll: true,
-                              onPageChanged: (index, reason) {
-                                setState(() => activeIndex = index);
-                              },
+                                context, searchFocus);
+                          },
+                          right: () {
+                            setState(() {
+                              carouselController.nextPage(
+                                  duration: Duration(milliseconds: 500));
+                            });
+                          },
+                          left: () {
+                            setState(() {
+                              carouselController.previousPage(
+                                  duration: Duration(milliseconds: 500));
+                            });
+                          },
+                          down: () {
+                            if (premierFocusList != null) {
+                              _changeFocus(
+                                  context, premierFocusList![lastPremierIndex]);
+                            }
+                          },
+                          child: Focus(
+                            focusNode: sliderFocusNode,
+                            child: Container(
+                              padding: const EdgeInsets.all(8.0),
+                              child: CarouselSlider.builder(
+                                carouselController: carouselController,
+                                options: CarouselOptions(
+                                  height: 250,
+                                  viewportFraction: 0.6,
+                                  //     aspectRatio: 2,
+                                  //  autoPlay: true,
+                                  enableInfiniteScroll: true,
+                                  onPageChanged: (index, reason) {
+                                    setState(() => activeIndex = index);
+                                  },
+                                ),
+                                itemCount: state.sliderList.length,
+                                itemBuilder: (context, index, realIndex) {
+                                  final urlImage = state.sliderList[index].link;
+                                  return buildImage(urlImage, index);
+                                },
+                              ),
                             ),
-                            itemCount: state.sliderList.length,
-                            itemBuilder: (context, index, realIndex) {
-                              final urlImage = state.sliderList[index].link;
-                              return buildImage(urlImage, index);
-                            },
                           ),
-                        ),
-                      );
-                    }
-                    return Container();
-                  },
-                ),
-                BlocBuilder<HomeBloc, HomeState>(
-                  builder: (context, state) {
-                    if (state is LoadHomeDataSuccessState) {
-                      if (premierFocusList == null) {
-                        premierFocusList = List.generate(
+                        );
+                      }
+                      return Container();
+                    },
+                  ),
+                  BlocConsumer<HomeBloc, HomeState>(
+                    listener: (context,state){
+                      if(state is LoadHomeDataSuccessState){
+                        premierFocusList ??= List.generate(
                             state.premierList.length, (index) => FocusNode());
-                      }
-                      ;
-                      if (filmFocusList == null) {
-                        filmFocusList = List.generate(
+                        filmFocusList ??= List.generate(
                             state.filmList.length, (index) => FocusNode());
+                        Repository.allElements.addAll(state.premierList);
+                        Repository.allElements.addAll(state.filmList);
                       }
-                      return Column(children: [
-                        ...buildSection("Премьеры", state.premierList, 0,
-                            premierFocusList!),
-                        ...buildSection(
-                            "Фильмы", state.filmList, 1, filmFocusList!),
-                        ...buildSection(
-                            "Сериалы", state.filmList, 1, filmFocusList!)
-                      ]);
-                    }
-                    return Container();
-                  },
-                ),
-              ],
+                    },
+                    builder: (context, state) {
+                      if (state is LoadHomeDataSuccessState) {
+                        return Column(children: [
+                          ...buildSection("Премьеры", state.premierList, 0,
+                              premierFocusList!),
+                          ...buildSection(
+                              "Фильмы", state.filmList, 1, filmFocusList!),
+                          // ...buildSection(
+                          //     "Сериалы", state.filmList, 2, serialFocusList!)
+                        ]);
+                      }
+                      return Container();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
       ),
     );
   }
@@ -253,7 +285,7 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
             border: (index == activeIndex && sliderFocusNode!.hasFocus)
                 ? Border.all(color: Colors.yellow, width: 2)
-                : null),
+                : Border.all(color: Colors.transparent, width: 2)),
         child: Image.network(
           urlImage,
           width: 500,

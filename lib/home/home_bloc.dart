@@ -23,6 +23,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final resultSlider=sliderFromJson(responseSlider.body);
       final premierList=await getUpdates(client,"soon","Premiers");
       final filmList=await getUpdates(client, "allfilms", "Films");
+      //final serialList=await getUpdates(client, "allfilms", "Serials");
       //emit(LoadHomeDataSuccessState(resultSlider,premierList..addAll(filmFromJson(await loadAsset("Premiers.txt")))));
       emit(LoadHomeDataSuccessState(resultSlider,filmList..addAll(filmFromJson(await loadAsset("Films.txt"))),premierList..addAll(filmFromJson(await loadAsset("Premiers.txt"))),));
     }
@@ -47,7 +48,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final site = html.getElementsByClassName("custom1-img").map((e) =>
       e.attributes['href']).toList();
       List<Film> premierList = filmFromJson( await loadAsset("${initial_repo}.txt"));
-      for (int x = 0; x < image.length; x++) {
+      for (int x = category=="soon"?0:15; x < image.length; x++) {
         bool isIncluded = false;
         for (int i = 0; i < premierList.length; i++) {
           if (title[x] == premierList[i].name) {

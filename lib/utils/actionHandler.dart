@@ -19,7 +19,7 @@ class EightButtonIntent extends Intent{}
 class NineButtonIntent extends Intent{}
 class ZeroButtonIntent extends Intent{}
 class EnterButtonIntent extends Intent {}
-
+class GoBackButtonIntent extends Intent{}
   Widget HandleRemoteActionsWidget({required Widget child}) {
     return Shortcuts(shortcuts: <LogicalKeySet, Intent>{
       LogicalKeySet(LogicalKeyboardKey.arrowLeft): LeftButtonIntent(),
@@ -29,6 +29,7 @@ class EnterButtonIntent extends Intent {}
       LogicalKeySet(LogicalKeyboardKey.select): EnterButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.digit0): ZeroButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.digit1): OneButtonIntent(),
+      LogicalKeySet(LogicalKeyboardKey.goBack): GoBackButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.digit2): TwoButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.digit3): ThreeButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.digit4): FourButtonIntent(),
@@ -40,7 +41,7 @@ class EnterButtonIntent extends Intent {}
     }, child: child);
   }
 
-  Widget ClickRemoteActionWidget({required Widget child,Function? right,Function? left,Function? down,Function? up,Function? enter,Function? zero,Function? one,two,three,four,five,six,seven,eight,nine}) {
+  Widget ClickRemoteActionWidget({required Widget child,Function? right,Function? left,Function? down,Function? up,Function? enter,Function? zero,Function? one,two,three,four,five,six,seven,eight,nine,goBack}) {
     return Actions(actions: <Type, Action<Intent>>{
           UpButtonIntent: CallbackAction<UpButtonIntent>(onInvoke: (intent)  {up==null?(){}:up();}),
       LeftButtonIntent: CallbackAction<LeftButtonIntent>(onInvoke: (intent)  {left==null?(){}:left();}),
@@ -60,6 +61,7 @@ class EnterButtonIntent extends Intent {}
       CallbackAction<SixButtonIntent>(onInvoke: (intent)  {six==null?(){}:six();}), SevenButtonIntent:
       CallbackAction<SevenButtonIntent>(onInvoke: (intent)  {seven==null?(){}:seven();}), EightButtonIntent:
       CallbackAction<EightButtonIntent>(onInvoke: (intent)  {eight==null?(){}:eight();}), NineButtonIntent:
-      CallbackAction<NineButtonIntent>(onInvoke: (intent)  {nine==null?(){}:nine();}),
+      CallbackAction<NineButtonIntent>(onInvoke: (intent)  {nine==null?(){}:nine();}),GoBackButtonIntent:
+      CallbackAction<GoBackButtonIntent>(onInvoke: (intent)  {goBack==null?(){}:goBack();}),
     }, child: child);
   }
