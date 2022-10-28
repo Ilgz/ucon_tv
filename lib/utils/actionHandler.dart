@@ -20,6 +20,7 @@ class NineButtonIntent extends Intent{}
 class ZeroButtonIntent extends Intent{}
 class EnterButtonIntent extends Intent {}
 class GoBackButtonIntent extends Intent{}
+class SpaceButtonIntent extends Intent{}
   Widget HandleRemoteActionsWidget({required Widget child}) {
     return Shortcuts(shortcuts: <LogicalKeySet, Intent>{
       LogicalKeySet(LogicalKeyboardKey.arrowLeft): LeftButtonIntent(),
@@ -27,6 +28,7 @@ class GoBackButtonIntent extends Intent{}
       LogicalKeySet(LogicalKeyboardKey.arrowDown): DownButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.arrowUp): UpButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.select): EnterButtonIntent(),
+      LogicalKeySet(LogicalKeyboardKey.space): SpaceButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.digit0): ZeroButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.digit1): OneButtonIntent(),
       LogicalKeySet(LogicalKeyboardKey.goBack): GoBackButtonIntent(),
@@ -49,7 +51,6 @@ class GoBackButtonIntent extends Intent{}
       RightButtonIntent: CallbackAction<RightButtonIntent>(onInvoke: (intent) {right==null?(){}:right();}),
       EnterButtonIntent:
           CallbackAction<EnterButtonIntent>(onInvoke: (intent)  {enter==null?(){}:enter();}),
-
       ZeroButtonIntent:
       CallbackAction<ZeroButtonIntent>(onInvoke: (intent)  {zero==null?(){}:zero();}),
       OneButtonIntent:

@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.techno.new_ucon">
    <application
+       android:usesCleartextTraffic="true"
         android:label="new_ucon"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
@@ -31,4 +32,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
 </manifest>
