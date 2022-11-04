@@ -28,12 +28,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final resultSlider = sliderFromJson(responseSlider.body);
       final premierList = await getUpdates(client, "soon", "Premiers");
       final filmList = await getUpdates(client, "allfilms", "Films");
-      //final serialList=await getUpdates(client, "allfilms", "Serials");
+      final serialList=await getUpdates(client, "seriallys", "Serials");
       //emit(LoadHomeDataSuccessState(resultSlider,premierList..addAll(filmFromJson(await loadAsset("Premiers.txt")))));
       emit(LoadHomeDataSuccessState(
         resultSlider,
         filmList..addAll(filmFromJson(await loadAsset("Films.txt"))),
         premierList..addAll(filmFromJson(await loadAsset("Premiers.txt"))),
+        serialList..addAll(filmFromJson(await loadAsset("Serials.txt")))
       ));
     } finally {
       client.close();
@@ -45,9 +46,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     List<Film> finalList = [];
     int premierPage = 1;
     while (finalList.isEmpty || (finalList.length % 20) == 0) {
+      if(category=="seriallys"){
+        print(premierPage.toString()+" better");
+      }
       String url = "https://kinotochka.co/$category/page/${premierPage}/";
+      if(category=="seriallys"){
+        print(url);
+      }
       final response = await client.get(Uri.parse(url));
+
       dom.Document html = dom.Document.html(response.body);
+
       final title = html
           .getElementsByClassName("custom1-title")
           .map((e) => e.innerHtml.trim())
@@ -64,6 +73,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           filmFromJson(await loadAsset("${initial_repo}.txt"));
       for (int x = category == "soon" ? 0 : 15; x < image.length; x++) {
         bool isIncluded = false;
+
         for (int i = 0; i < premierList.length; i++) {
           if (title[x] == premierList[i].name) {
             print("is included" + title[x] + premierList[i].name);

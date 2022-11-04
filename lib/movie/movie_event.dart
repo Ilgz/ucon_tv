@@ -4,7 +4,8 @@ part of 'movie_bloc.dart';
 abstract class MovieEvent {}
 class LoadFilmLinkEvent extends MovieEvent{
   String filmLink;
-  LoadFilmLinkEvent(this.filmLink);
+  String filmName;
+  LoadFilmLinkEvent(this.filmLink,this.filmName);
 }
 class DisposeMovieEvent extends MovieEvent{}
 class SeekBarUpdateEvent extends MovieEvent{

@@ -18,12 +18,12 @@ class MoviePlay extends StatefulWidget {
 
 class _MoviePlayState extends State<MoviePlay> {
   VlcPlayerController? _videoPlayerController;
-
   bool controllerVisibility = true;
   FocusNode? playButtonFocus;
   FocusNode rewindButtonFocus = FocusNode();
   FocusNode forwardButtonFocus = FocusNode();
   FocusNode fullScreenButtonFocus = FocusNode();
+  FocusNode backButtonFocus = FocusNode();
   bool isPlaying = true;
   bool isFullscreen = false;
   RestartableTimer? _timer; // late MovieBloc _bloc;
@@ -31,7 +31,7 @@ class _MoviePlayState extends State<MoviePlay> {
   void initState() {
     super.initState();
     BlocProvider.of<MovieBloc>(context)
-      ..add(LoadFilmLinkEvent(widget.film.siteLink));
+      ..add(LoadFilmLinkEvent(widget.film.siteLink,widget.film.name));
   }
 
   @override
@@ -71,12 +71,34 @@ class _MoviePlayState extends State<MoviePlay> {
           child: Expanded(
             flex: 1,
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  ClickRemoteActionWidget(
+                    enter: (){
+                      Navigator.pop(context);
+                    },
+                      down: () {
+                        FocusScope.of(context).requestFocus(playButtonFocus);
+                        setState(() {});
+
+                      },
+                      child: Focus(
+                          focusNode: backButtonFocus,
+                          child: CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Colors.black.withOpacity(1),
+                            child: Icon(Icons.arrow_back,
+                                color: backButtonFocus.hasFocus
+                                    ? Colors.orange
+                                    : Colors.white),
+                          ))),
+                  SizedBox(
+                    height: 20,
+                  ),
                   Container(
-                      color: Colors.purpleAccent,
+                      color: Colors.black,
                       child: Image.network(
                         widget.film.imageLink,
                         height: 280,
@@ -99,6 +121,22 @@ class _MoviePlayState extends State<MoviePlay> {
           flex: 3,
           child: Column(
             children: [
+              GestureDetector(
+                onTap:(){
+                  print("tapped");
+                  _videoPlayerController!.dispose();
+                  _videoPlayerController=VlcPlayerController.network(
+                     "https://i.imgur.com/7bMqysJ.mp4",
+                  );
+                  _videoPlayerController!.setLooping(true);
+                  //_videoPlayerController!.play();
+                },
+                child: Container(
+                  color: Colors.red,
+                  width: double.infinity,
+                  height: 68,
+                ),
+              ),
               Expanded(flex: isFullscreen ? 1 : 0, child: buildFullMode()),
             ],
           ),
@@ -118,12 +156,17 @@ class _MoviePlayState extends State<MoviePlay> {
       },
       listener: (context, state) {
         if (state is LoadFilmLinkSuccessState) {
+          print(state.playlist!.first.file);
+          print(state.filmLink.isEmpty);
           _videoPlayerController = VlcPlayerController.network(
-            "https://i.imgur.com/7bMqysJ.mp4",
+            state.filmLink.isEmpty?state.playlist!.first.file.replaceAll("[480,720]", "720"):state.filmLink
+            ,
+          //  "https://i.imgur.com/7bMqysJ.mp4",
             hwAcc: HwAcc.auto,
             autoPlay: true,
             options: VlcPlayerOptions(),
           );
+
         }
       },
       builder: (context, state) {
@@ -153,7 +196,6 @@ class _MoviePlayState extends State<MoviePlay> {
                   StatefulBuilder(
                       builder: (BuildContext context, StateSetter setState) {
                     changeFocus(FocusNode focusNode) {
-                      print("Change focus");
                       setState(() {
                         FocusScope.of(context).requestFocus(focusNode);
                       });
@@ -194,6 +236,11 @@ class _MoviePlayState extends State<MoviePlay> {
                                             right: () {
                                               activateController();
                                               changeFocus(playButtonFocus!);
+                                            },
+                                            up: () {
+                                              activateController();
+                                              changeFocus(backButtonFocus!);
+                                              this.setState(() {});
                                             },
                                             enter: () {
                                               activateController();
@@ -236,12 +283,13 @@ class _MoviePlayState extends State<MoviePlay> {
                                             },
                                             up: () {
                                               activateController();
+                                              changeFocus(backButtonFocus!);
+                                              this.setState(() {});
                                             },
                                             down: () {
                                               activateController();
                                             },
                                             right: () {
-                                              print("playRight");
                                               changeFocus(forwardButtonFocus);
                                               activateController();
                                             },
@@ -281,6 +329,11 @@ class _MoviePlayState extends State<MoviePlay> {
                                                   fullScreenButtonFocus);
                                               activateController();
                                             },
+                                            up: () {
+                                              activateController();
+                                              changeFocus(backButtonFocus!);
+                                              this.setState(() {});
+                                            },
                                             left: () {
                                               changeFocus(playButtonFocus!);
                                               activateController();
@@ -298,14 +351,17 @@ class _MoviePlayState extends State<MoviePlay> {
                                     Positioned(
                                       right: 10,
                                       child: ClickRemoteActionWidget(
+                                          up: () {
+                                            activateController();
+                                            changeFocus(backButtonFocus!);
+                                            this.setState(() {});
+                                          },
                                           enter: () {
-
                                             this.setState(() {
-                                              if(isFullscreen){
+                                              if (isFullscreen) {
                                                 isFullscreen = false;
-                                              }else{
+                                              } else {
                                                 isFullscreen = true;
-
                                               }
                                             });
                                             activateController();

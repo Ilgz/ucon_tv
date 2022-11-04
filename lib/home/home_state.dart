@@ -6,6 +6,7 @@ class HomeInitial extends HomeState {}
 class LoadHomeDataSuccessState extends HomeState{
   List<Slider> sliderList;
   List<Film> premierList;
+  List<Film> serialList;
   List<Film> filmList;
-  LoadHomeDataSuccessState(this.sliderList,this.filmList,this.premierList);
+  LoadHomeDataSuccessState(this.sliderList,this.filmList,this.premierList,this.serialList);
 }

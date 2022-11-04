@@ -6,7 +6,8 @@ abstract class MovieState {}
 class MovieInitial extends MovieState {}
 class LoadFilmLinkSuccessState extends MovieState{
   String filmLink;
-  LoadFilmLinkSuccessState(this.filmLink);
+  List<PlaylistElement>? playlist;
+  LoadFilmLinkSuccessState({this.filmLink="",this.playlist});
 }
 class LoadFilmLinkLoadingState extends MovieState{
 }

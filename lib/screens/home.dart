@@ -1,12 +1,14 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_ucon/screens/movie_play.dart';
+import 'package:new_ucon/screens/profile.dart';
+import 'package:new_ucon/screens/search_home.dart';
 
 import '../constants.dart';
 import '../home/home_bloc.dart';
 import '../model/film.dart';
 import '../utils/actionHandler.dart';
+import 'movie_play.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -16,7 +18,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int activeIndex = 0;
+  CarouselController carouselController = CarouselController();
+  ScrollController pageController = ScrollController();
   int lastFilmIndex = 0;
   int lastPremierIndex = 0;
   int lastSerialIndex = 0;
@@ -26,12 +29,7 @@ class _HomePageState extends State<HomePage> {
   List<FocusNode>? premierFocusList;
   List<FocusNode>? filmFocusList;
   List<FocusNode>? serialFocusList;
-  FocusNode searchFocus = FocusNode();
-  FocusNode drawerFocus = FocusNode();
-  CarouselController carouselController = CarouselController();
-  ScrollController pageController = ScrollController();
-  FocusNode testFocusNode=FocusNode();
-  FocusNode testFocusNode2=FocusNode();
+  int activeIndex = 0;
 
   @override
   void initState() {
@@ -41,9 +39,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    premierFocusList?.forEach((element) {
-      element.dispose();
-    });
+    // premierFocusList?.forEach((element) {
+    //   element.dispose();
+    // });
     super.dispose();
   }
 
@@ -62,58 +60,20 @@ class _HomePageState extends State<HomePage> {
         ),
         child: Scaffold(
           drawerEnableOpenDragGesture: false,
-          drawer: Drawer(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: <Widget>[
-                  ClickRemoteActionWidget(
-                    down: (){_changeFocus(context, testFocusNode2);},
-                    child: Focus(
-                      focusNode: testFocusNode,
-                      child: ListTile(
-                        textColor: testFocusNode.hasFocus?Colors.yellow:Colors.black87,
-                        title: Text('Item 1' ),
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ),
-                  ),
-                  ClickRemoteActionWidget(
-                    up: (){_changeFocus(context, testFocusNode);},
-
-                    child: Focus(
-                      focusNode: testFocusNode2,
-                      child: ListTile(
-                        textColor: testFocusNode2.hasFocus?Colors.yellow:Colors.black87,
-                        onTap: (){
-                          print("ff");
-                        },
-                        title: Text('Item 2'),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           appBar: AppBar(
-              iconTheme: IconThemeData(color: drawerFocus.hasFocus?Colors.yellow:Colors.white),
               backgroundColor: const Color(0xff00001c),
               title: GestureDetector(onTap: () {}, child: const Text("Фильм")),
               actions: [
-                Builder(
-                  builder:(context)=> ClickRemoteActionWidget(enter:(){
-                    Scaffold.of(context).openDrawer();
-                    },right:(){
-                    _changeFocus(context, searchFocus);
-                  }
-                  ,child: Focus(focusNode:drawerFocus,child: Icon(null))),
-                ),
-                SizedBox(width:20),
                 ClickRemoteActionWidget(
-                  left:(){
-                    _changeFocus(context, drawerFocus);
-                  },
+                    right: () {
+                      _changeFocus(context, FocusList.profileFocus);
+                    },
+                    enter: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => SearchHome()));
+                    },
                     down: () {
                       _changeFocus(context, sliderFocusNode!);
                       pageController.animateTo(0,
@@ -121,123 +81,155 @@ class _HomePageState extends State<HomePage> {
                           curve: Curves.fastOutSlowIn);
                     },
                     child: Focus(
-                      focusNode: searchFocus,
+                      focusNode: FocusList.searchFocus,
                       child: Icon(
                         Icons.search,
-                        color: searchFocus.hasFocus ? Colors.yellow : Colors.white,
+                        color: FocusList.searchFocus.hasFocus
+                            ? Colors.orange
+                            : Colors.white,
+                      ),
+                    )),
+                SizedBox(width: 20,),
+                ClickRemoteActionWidget(
+                    left: () {
+                      _changeFocus(context, FocusList.searchFocus);
+                    },
+                    enter: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => Profile()));
+                    },
+                    down: () {
+                      _changeFocus(context, sliderFocusNode!);
+                      pageController.animateTo(0,
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.fastOutSlowIn);
+                    },
+                    child: Focus(
+                      focusNode: FocusList.profileFocus,
+                      child: Icon(
+                        Icons.person,
+                        color: FocusList.profileFocus.hasFocus
+                            ? Colors.orange
+                            : Colors.white,
                       ),
                     ))
               ]),
           backgroundColor: Colors.transparent,
-          body: SingleChildScrollView(
-            controller: pageController,
-            child: Column(
-              children: [
-                BlocBuilder<HomeBloc, HomeState>(
-                  builder: (context, state) {
-                    if (state is LoadHomeDataSuccessState) {
-                      return ClickRemoteActionWidget(
-                        enter: () {
-                          if ((sliderFocusNode!.hasFocus)) {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => MoviePlay(
-                                        film: Film(
-                                            name: state
-                                                .sliderList[activeIndex].name,
-                                            imageLink: state
-                                                .sliderList[activeIndex]
-                                                .intentImgUrl,
-                                            siteLink: state
-                                                .sliderList[activeIndex]
-                                                .intentSiteLink))));
-                          }
-                        },
-                        up: () {
-                          _changeFocus(context, searchFocus);
-                        },
-                        right: () {
-                          setState(() {
-                            carouselController.nextPage(
-                                duration: Duration(milliseconds: 500));
-                          });
-                        },
-                        left: () {
-                          setState(() {
-                            carouselController.previousPage(
-                                duration: Duration(milliseconds: 500));
-                          });
-                        },
-                        down: () {
-                          if (premierFocusList != null) {
-                            _changeFocus(
-                                context, premierFocusList![lastPremierIndex]);
-                          }
-                        },
-                        child: Focus(
-                          focusNode: sliderFocusNode,
-                          child: Container(
-                            padding: const EdgeInsets.all(8.0),
-                            child: CarouselSlider.builder(
-                              carouselController: carouselController,
-                              options: CarouselOptions(
-                                height: 250,
-                                viewportFraction: 0.6,
-                                //     aspectRatio: 2,
-                                //  autoPlay: true,
-                                enableInfiniteScroll: true,
-                                onPageChanged: (index, reason) {
-                                  setState(() => activeIndex = index);
-                                },
-                              ),
-                              itemCount: state.sliderList.length,
-                              itemBuilder: (context, index, realIndex) {
-                                final urlImage = state.sliderList[index].link;
-                                return buildImage(
-                                    urlImage,
-                                    index,
-                                    state.sliderList[index].name,
-                                    state.sliderList[index].intentImgUrl,
-                                    state.sliderList[index].intentSiteLink);
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                    return Container();
-                  },
-                ),
-                BlocConsumer<HomeBloc, HomeState>(
-                  listener: (context, state) {
-                    if (state is LoadHomeDataSuccessState) {
-                      premierFocusList ??= List.generate(
-                          state.premierList.length, (index) => FocusNode());
-                      filmFocusList ??= List.generate(
-                          state.filmList.length, (index) => FocusNode());
-                      Repository.allElements.addAll(state.premierList);
-                      Repository.allElements.addAll(state.filmList);
-                    }
-                  },
-                  builder: (context, state) {
-                    if (state is LoadHomeDataSuccessState) {
-                      return Column(children: [
-                        ...buildSection(
-                            "Премьеры", state.premierList, 0, premierFocusList!),
-                        ...buildSection(
-                            "Фильмы", state.filmList, 1, filmFocusList!),
-                        // ...buildSection(
-                        //     "Сериалы", state.filmList, 2, serialFocusList!)
-                      ]);
-                    }
-                    return Container();
-                  },
-                ),
-              ],
-            ),
-          ),
+          body: buildPage(),
         ),
+      ),
+    );
+  }
+
+  Widget buildPage() {
+    return SingleChildScrollView(
+      controller: pageController,
+      child: Column(
+        children: [
+          BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, state) {
+              if (state is LoadHomeDataSuccessState) {
+                return ClickRemoteActionWidget(
+                  enter: () {
+                    if ((sliderFocusNode!.hasFocus)) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => MoviePlay(
+                                  film: Film(
+                                      name: state.sliderList[activeIndex].name,
+                                      imageLink: state
+                                          .sliderList[activeIndex].intentImgUrl,
+                                      siteLink: state.sliderList[activeIndex]
+                                          .intentSiteLink))));
+                    }
+                  },
+                  up: () {
+                    _changeFocus(context, FocusList.profileFocus);
+                  },
+                  right: () {
+                    setState(() {
+                      carouselController.nextPage(
+                          duration: Duration(milliseconds: 500));
+                    });
+                  },
+                  left: () {
+                    setState(() {
+                      carouselController.previousPage(
+                          duration: Duration(milliseconds: 500));
+                    });
+                  },
+                  down: () {
+                    if (premierFocusList != null) {
+                      pageController.animateTo(270,
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.fastOutSlowIn);
+                      _changeFocus(
+                          context, premierFocusList![lastPremierIndex]);
+                    }
+                  },
+                  child: Focus(
+                    focusNode: sliderFocusNode,
+                    child: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CarouselSlider.builder(
+                        carouselController: carouselController,
+                        options: CarouselOptions(
+                          height: 250,
+                          viewportFraction: 0.6,
+                          enableInfiniteScroll: true,
+                          onPageChanged: (index, reason) {
+                            setState(() => activeIndex = index);
+                          },
+                        ),
+                        itemCount: state.sliderList.length,
+                        itemBuilder: (context, index, realIndex) {
+                          final urlImage = state.sliderList[index].link;
+                          return buildImage(
+                              urlImage,
+                              index,
+                              state.sliderList[index].name,
+                              state.sliderList[index].intentImgUrl,
+                              state.sliderList[index].intentSiteLink);
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return Container();
+            },
+          ),
+          BlocConsumer<HomeBloc, HomeState>(
+            listener: (context, state) {
+              if (state is LoadHomeDataSuccessState) {
+                premierFocusList ??= List.generate(
+                    state.premierList.length, (index) => FocusNode());
+                filmFocusList ??= List.generate(
+                    state.filmList.length, (index) => FocusNode());
+                serialFocusList ??= List.generate(
+                    state.serialList.length, (index) => FocusNode());
+                Repository.allElements.addAll(state.premierList);
+                Repository.allElements.addAll(state.filmList);
+                Repository.allElements.addAll(state.serialList);
+              }
+            },
+            builder: (context, state) {
+              if (state is LoadHomeDataSuccessState) {
+                return Column(children: [
+                  ...buildSection(
+                      "Премьеры", state.premierList, 0, premierFocusList!),
+                  ...buildSection("Фильмы", state.filmList, 1, filmFocusList!),
+                  ...buildSection(
+                      "Сериалы", state.serialList, 2, serialFocusList!)
+                ]);
+              }
+              return Container();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -259,19 +251,12 @@ class _HomePageState extends State<HomePage> {
             controller: scrollController[sectionIndex],
             scrollDirection: Axis.horizontal,
             itemCount: listMovies.length,
-            //itemCount: state.filmList.length,
             itemBuilder: (context, index) {
               return buildMovieItem(
                   listMovies[index], index, sectionIndex, focusList);
-              // return buildMovieItem(state.filmList[index],index);
             },
           ))
     ];
-  }
-
-  _changeFocus(BuildContext context, FocusNode node) {
-    FocusScope.of(context).requestFocus(node);
-    setState(() {});
   }
 
   Widget buildMovieItem(
@@ -291,6 +276,15 @@ class _HomePageState extends State<HomePage> {
         } else if (sectionIndex == 1) {
           _changeFocus(context, premierFocusList![lastPremierIndex]);
           lastFilmIndex = index;
+          pageController.animateTo(270,
+              duration: Duration(milliseconds: 500),
+              curve: Curves.fastOutSlowIn);
+        } else if (sectionIndex == 2) {
+          _changeFocus(context, filmFocusList![lastFilmIndex]);
+          lastSerialIndex = index;
+          pageController.animateTo(440,
+              duration: Duration(milliseconds: 500),
+              curve: Curves.fastOutSlowIn);
         }
       },
       right: () {
@@ -306,7 +300,14 @@ class _HomePageState extends State<HomePage> {
         if (sectionIndex == 0) {
           _changeFocus(context, filmFocusList![lastFilmIndex]);
           lastPremierIndex = index;
-          pageController.animateTo(250,
+          pageController.animateTo(440,
+              duration: Duration(milliseconds: 500),
+              curve: Curves.fastOutSlowIn);
+        }
+        if (sectionIndex == 1) {
+          _changeFocus(context, serialFocusList![lastSerialIndex]);
+          lastFilmIndex = index;
+          pageController.animateTo(610,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         }
@@ -405,4 +406,9 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       );
+
+  _changeFocus(BuildContext context, FocusNode node) {
+    FocusScope.of(context).requestFocus(node);
+    setState(() {});
+  }
 }
