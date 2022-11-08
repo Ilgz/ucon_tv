@@ -1,7 +1,9 @@
+import 'package:carousel_slider/carousel_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:new_ucon/utils/actionHandler.dart';
 
 import 'model/film.dart';
+import 'model/movie_element.dart';
 
 String myServer = "https://ucontv.com.kg/";
 String support =
@@ -11,9 +13,16 @@ String policy =
 RegExp regExpLink = RegExp(
     r"((https?:www\.)|(https?:\/\/)|(www\.))[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9]{1,6}(\/[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)?");
 
-class FocusList {
+class HomeClass {
   static FocusNode searchFocus = FocusNode();
   static FocusNode profileFocus = FocusNode();
+  static FocusNode sliderFocusNode=FocusNode();
+  static CarouselController carouselController=CarouselController();
+  static List<MovieElement> movieElements=[MovieElement(sectionIndex:0, sectionName: 'Премъеры'),MovieElement(sectionName: "Мультфильмы", sectionIndex: 1),MovieElement(sectionName: "Сериалы", sectionIndex: 2),MovieElement(sectionName: "Фильмы", sectionIndex: 3),];
+  static int activeIndex = 0;
+
+
+
 }
 
 class Repository {
