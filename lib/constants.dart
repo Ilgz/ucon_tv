@@ -25,9 +25,7 @@ class HomeClass {
   static int activeIndex = 0;
 }
 
-class Repository {
-  static List<Film> allElements = [];
-}
+
 
 double TextSize(String text, TextStyle style) {
   final TextPainter textPainter = TextPainter(

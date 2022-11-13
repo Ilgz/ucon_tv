@@ -23,6 +23,21 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   HomeBloc() : super(HomeInitial()) {
     on<LoadHomeDataEvent>(_loadHomeDataEvent);
     on<UpdateMovieEvent>(_updateMovieEvent);
+    on<SearchMovieEvent>(_searchMovieEvent);
+  }
+  Future<void> _searchMovieEvent(SearchMovieEvent event,Emitter<HomeState> emit)async{
+    List<Film> _finalList = [];
+    emit(SearchMovieLoadingState());
+    final response = await http.get(Uri.parse("https://rezka.ag/search/?do=search&subaction=search&q=${event.query}&page=1"));
+    dom.Document html = dom.Document.html(response.body);
+    for(int i=0;i<html.getElementsByClassName('b-content__inline_item-cover').length;i++){
+      String name=html.getElementsByClassName('b-content__inline_item-link')[i].children.first.text;
+      String image=html.getElementsByClassName('b-content__inline_item-cover')[i].children.first.children.first.attributes["src"]!;
+      String site=html.getElementsByClassName('b-content__inline_item-cover')[i].children.first.attributes["href"]!;
+      _finalList.add(Film(name: name,imageLink: image,siteLink: site));
+    }
+    emit(SearchMovieSuccessState(_finalList));
+
   }
   Future<void> _updateMovieEvent(UpdateMovieEvent event, Emitter<HomeState> emit) async{
     late int page;

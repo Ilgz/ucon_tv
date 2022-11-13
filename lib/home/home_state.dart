@@ -9,7 +9,12 @@ class UpdateMovieSuccess extends HomeState {
   UpdateMovieSuccess(this.movieList,this.category);
 
 }
-
+class SearchMovieLoadingState extends HomeState{
+}
+class SearchMovieSuccessState extends HomeState{
+  List<Film> movieList;
+  SearchMovieSuccessState(this.movieList);
+}
 class LoadHomeDataSuccessState extends HomeState{
   List<Slider> sliderList;
   List<Film> cartoonList;

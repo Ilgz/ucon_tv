@@ -39,7 +39,7 @@ class _MoviePlayState extends State<MoviePlay> {
   void initState() {
     super.initState();
     BlocProvider.of<MovieBloc>(context)
-      ..add(LoadFilmLinkEvent(widget.film.siteLink, widget.film.name));
+      .add(LoadFilmLinkEvent(widget.film.siteLink, widget.film.name));
   }
 
   @override
@@ -112,7 +112,7 @@ class _MoviePlayState extends State<MoviePlay> {
                                     ? Colors.orange
                                     : Colors.white),
                           ))),
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                   ),
                   Container(
@@ -123,12 +123,12 @@ class _MoviePlayState extends State<MoviePlay> {
                         fit: BoxFit.fill,
                         width: 192,
                       )),
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
                   Text(
                     widget.film.name,
-                    style: TextStyle(color: Colors.yellow, fontSize: 18),
+                    style: const TextStyle(color: Colors.yellow, fontSize: 18),
                   )
                 ],
               ),
@@ -193,11 +193,11 @@ class _MoviePlayState extends State<MoviePlay> {
                 height: isFullscreen ? double.infinity : 360,
                 width: isFullscreen ? double.infinity : 640,
                 child: Stack(children: [
-                  Center(child: CircularProgressIndicator(color: Colors.white)),
+                  const Center(child: CircularProgressIndicator(color: Colors.white)),
                   VlcPlayer(
                     controller: _videoPlayerController!,
                     aspectRatio: 16 / 9,
-                    placeholder: Center(
+                    placeholder: const Center(
                         child: CircularProgressIndicator(color: Colors.white)),
                   ),
                   StatefulBuilder(
@@ -266,7 +266,7 @@ class _MoviePlayState extends State<MoviePlay> {
                                                             .hasFocus
                                                         ? Colors.yellow
                                                         : Colors.white))),
-                                        SizedBox(
+                                        const SizedBox(
                                           width: 20,
                                         ),
                                         ClickRemoteActionWidget(
@@ -317,7 +317,7 @@ class _MoviePlayState extends State<MoviePlay> {
                                                           ? Colors.yellow
                                                           : Colors.white,
                                                 ))),
-                                        SizedBox(
+                                        const SizedBox(
                                           width: 20,
                                         ),
                                         ClickRemoteActionWidget(
@@ -526,6 +526,6 @@ Widget filmContainer(bool isFullscreen) {
     color: Colors.black87.withOpacity(1),
     height: isFullscreen ? double.infinity : 360,
     width: isFullscreen ? double.infinity : 640,
-    child: Center(child: CircularProgressIndicator(color: Colors.white)),
+    child: const Center(child: CircularProgressIndicator(color: Colors.white)),
   );
 }

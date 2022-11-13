@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   bool isFirst=true;
   @override
   void initState() {
-    BlocProvider.of<HomeBloc>(context)..add(LoadHomeDataEvent());
+    BlocProvider.of<HomeBloc>(context).add(LoadHomeDataEvent());
     firstRowFocus=List.generate(getDoubleChannels()[0].length, (index) => FocusNode());
     secondRowFocus=List.generate(getDoubleChannels()[1].length, (index) => FocusNode());
     super.initState();

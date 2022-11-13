@@ -1,10 +1,13 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_ucon/constants.dart';
 import 'package:new_ucon/utils/actionHandler.dart';
 
+import '../home/home_bloc.dart';
 import '../model/film.dart';
+import 'movie_play.dart';
 
 class SearchHome extends StatefulWidget {
   const SearchHome({Key? key}) : super(key: key);
@@ -18,17 +21,8 @@ class _SearchHomeState extends State<SearchHome> {
   final FocusNode _searchBarFocus = FocusNode();
   ScrollController listScrollController = ScrollController();
   int lastElement = 0;
-  List<FocusNode> allFocusList =
-      List.generate(Repository.allElements.length, (index) => FocusNode());
-  List<Film> allElements = Repository.allElements;
+ List<FocusNode>? allFocusList ;
 
-  @override
-  void dispose() {
-    allFocusList.forEach((element) {
-      element.dispose();
-    });
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,21 +30,62 @@ class _SearchHomeState extends State<SearchHome> {
         child: Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                  image: Image.asset('assets/images/background_home.jpg').image,
+                  image: Image
+                      .asset('assets/images/background_home.jpg')
+                      .image,
                   fit: BoxFit.cover),
             ),
             child: Scaffold(
                 backgroundColor: Colors.transparent,
                 appBar: buildAppBar(context),
-                body: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 6, childAspectRatio: 135 / 200),
-                  controller: listScrollController,
-                  scrollDirection: Axis.vertical,
-                  itemCount: allElements.length,
-                  itemBuilder: (context, index) {
-                    return buildMovieItem(
-                        allElements[index], index, allFocusList!);
+                body: BlocConsumer<HomeBloc, HomeState>(
+                  listener: (context,state){
+                    if(state is SearchMovieSuccessState){
+                      allFocusList?.forEach((element) {
+                        element.dispose();
+                      });
+                      allFocusList?.clear();
+                      allFocusList = List.generate(state.movieList.length, (index) => FocusNode());
+                      FocusScope.of(context).requestFocus(allFocusList?.first);
+                      setState(() {
+                      });
+                    }
+                  },
+                  buildWhen: (context,state){
+                    if(state is SearchMovieSuccessState||state is SearchMovieLoadingState){
+                      return true;
+                    }else{
+                      return false;
+                    }
+                  },
+                  builder: (context, state) {
+
+                    if(state is SearchMovieSuccessState){
+                      if(allFocusList!=null){
+                        return GridView.builder(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 6, childAspectRatio: 120 / 200),
+                          controller: listScrollController,
+                          scrollDirection: Axis.vertical,
+                          itemCount: state.movieList.length,
+                          itemBuilder: (context, index) {
+                            return buildMovieItem(
+                                state.movieList[index], index, allFocusList!,state.movieList);
+                          },
+                        );
+                      }
+                    }
+                    if(state is SearchMovieLoadingState){
+                     return const Center(child: Padding(
+                        padding: EdgeInsets.only(bottom: 48.0),
+                        child: CircularProgressIndicator(color: Colors.white,),
+                      ));
+                    }
+                    return const Center(child: Padding(
+                      padding: EdgeInsets.only(bottom: 48.0),
+                      child: Text("Введите текст для поиска.",style: TextStyle(fontSize: 24,color: Colors.white),),
+                    ));
+
                   },
                 ))));
   }
@@ -58,7 +93,7 @@ class _SearchHomeState extends State<SearchHome> {
   PreferredSizeWidget buildAppBar(BuildContext context) {
     return AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color(0xff00001c),
+        backgroundColor: const Color(0xff00001c),
         title: searchBar(),
         actions: [
           ClickRemoteActionWidget(
@@ -69,7 +104,7 @@ class _SearchHomeState extends State<SearchHome> {
                 Navigator.pop(context);
               },
               down: () {
-                _changeFocus(context, allFocusList?[lastElement]);
+               _changeFocus(context, allFocusList?[lastElement]);
               },
               child: Focus(
                 focusNode: _cancelButFocus,
@@ -83,62 +118,41 @@ class _SearchHomeState extends State<SearchHome> {
               ))
         ]);
   }
-
-  void _searching(String value) {
-    List<Film> searchLocationList = [];
-    if (value.isNotEmpty) {
-      for (var i = 0; i < Repository.allElements.length; i++) {
-        if (Repository.allElements[i].name
-            .toLowerCase()
-            .contains(value.toLowerCase())) {
-          searchLocationList.add(Repository.allElements[i]);
-        }
-      }
-      allElements = searchLocationList;
-    } else {
-      allElements = Repository.allElements;
-    }
-    allFocusList.forEach((element) {
-      element.dispose();
-    });
-    allFocusList.clear();
-    allFocusList = List.generate(allElements.length, (index) => FocusNode());
-    setState(() {});
-  }
-
   Widget searchBar() {
     return ClickRemoteActionWidget(
         down: () {
           _changeFocus(context, allFocusList?[0]);
         },
+        right: (){
+          _changeFocus(context, _cancelButFocus);
+        },
         child: TextField(
             focusNode: _searchBarFocus,
-            onChanged: (value) {
-              _searching(value);
-            },
+
             onSubmitted: (value) {
-              _changeFocus(context, allFocusList!.first);
+              BlocProvider.of<HomeBloc>(context).add(SearchMovieEvent(value));
             },
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
                 hintText: "Поиск...",
                 hintStyle: TextStyle(fontSize: 16, color: Colors.grey)),
             autofocus: true,
-            style: TextStyle(fontSize: 16, color: Colors.white)));
+            style: const TextStyle(fontSize: 16, color: Colors.white)));
   }
 
   _changeFocus(BuildContext context, FocusNode? node) {
     FocusScope.of(context).requestFocus(node);
     setState(() {});
   }
-
-  Widget buildMovieItem(Film item, int index, List<FocusNode> focusList) {
+  Widget buildMovieItem(Film item, int index, List<FocusNode> focusList,List<Film> movieList) {
     return ClickRemoteActionWidget(
       up: () {
         if (index < 6) {
           _changeFocus(context, _cancelButFocus);
           lastElement = index;
         } else {
-          if (index < (Repository.allElements.length - 6)) {
+
+          if (index < (movieList.length + 6)) {
+
             _changeFocus(context, focusList[index - 6]);
             int group = 1;
             while (true) {
@@ -150,7 +164,7 @@ class _SearchHomeState extends State<SearchHome> {
             }
             group -= 2;
             listScrollController.animateTo(group * (200 + 30),
-                duration: Duration(milliseconds: 500),
+                duration: const Duration(milliseconds: 500),
                 curve: Curves.fastOutSlowIn);
           }
         }
@@ -168,13 +182,13 @@ class _SearchHomeState extends State<SearchHome> {
               }
             }
             listScrollController.animateTo(group * (200 + 30),
-                duration: Duration(milliseconds: 500),
+                duration: const Duration(milliseconds: 500),
                 curve: Curves.fastOutSlowIn);
           }
         }
       },
       down: () {
-        if (index < (Repository.allElements.length - 6)) {
+        if (index < (movieList.length - 6)) {
           _changeFocus(context, focusList[index + 6]);
           int group = 1;
           while (true) {
@@ -185,9 +199,13 @@ class _SearchHomeState extends State<SearchHome> {
             }
           }
           listScrollController.animateTo(group * (200 + 30),
-              duration: Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         }
+      },
+      enter: (){
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => MoviePlay(film: item)));
       },
       left: () {
         if (focusList != null && index != 0) {
@@ -203,47 +221,44 @@ class _SearchHomeState extends State<SearchHome> {
             }
             group -= 2;
             listScrollController.animateTo(group * (200 + 30),
-                duration: Duration(milliseconds: 500),
+                duration: const Duration(milliseconds: 500),
                 curve: Curves.fastOutSlowIn);
           }
         }
       },
       child: Focus(
         focusNode: focusList?[index],
-        child: Container(
-          color: Colors.primaries[Random().nextInt(Colors.primaries.length)],
-          child: Card(
-            elevation: 5.0,
-            clipBehavior: Clip.antiAlias,
-            margin: (focusList != null && focusList![index].hasFocus)
-                ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
-                : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            color: Colors.transparent,
-            child: Container(
-              decoration: BoxDecoration(
-                  border: (focusList != null && focusList![index].hasFocus)
-                      ? Border.all(color: Colors.yellow, width: 3)
-                      : null),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Image.network(
-                    item.imageLink,
-                    fit: BoxFit.fill,
-                    height: 160,
-                    width: double.infinity,
+        child: Card(
+          elevation: 5.0,
+          clipBehavior: Clip.antiAlias,
+          margin: (focusList != null && focusList![index].hasFocus)
+              ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
+              : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          color: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+                border: (focusList != null && focusList![index].hasFocus)
+                    ? Border.all(color: Colors.yellow, width: 3)
+                    : null),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Image.network(
+                  item.imageLink,
+                  fit: BoxFit.fill,
+                  height: 190,
+                  width: double.infinity,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(5),
+                  child: Text(
+                    item.name,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Text(
-                      item.name,
-                      style: TextStyle(color: Colors.white),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

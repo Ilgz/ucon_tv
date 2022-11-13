@@ -6,3 +6,7 @@ class UpdateMovieEvent extends HomeEvent{
   String category;
   UpdateMovieEvent(this.category);
 }
+class SearchMovieEvent extends HomeEvent{
+  String query;
+  SearchMovieEvent(this.query);
+}
