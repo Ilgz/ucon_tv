@@ -56,6 +56,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     String requestSlidersUrl = "${myServer}Updating/Sliders/";
     var client = http.Client();
     try {
+      //getEpisodes();
+      rezkaApi();
       final responseSlider = await client.get(Uri.parse(requestSlidersUrl));
       final resultSlider = sliderFromJson(responseSlider.body);
       final filmList=await getMovies(client, "films",1);
@@ -75,37 +77,61 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 
-  Future<void> rezkaFilm() async {
-    late String translator_id;
-    late String movie_id;
-    String  content_type="";
+  Future<void> getEpisodes()async{
+    List<List<int>> episodeList=[];
+     Map dataSerial = {'id': '45', 'translator_id': '111', 'action': 'get_episodes'};
+    final response = await http
+        .post(Uri.parse("https://rezka.ag/ajax/get_cdn_series/"), body: dataSerial);
+     dom.Document episodes = dom.Document.html(jsonDecode(response.body)['episodes']);
+       episodes.getElementsByClassName("b-simple_episode__item").forEach((element) {
+        int episode= int.parse(element.attributes['data-episode_id']!);
+
+         if(episode==1){
+           episodeList.add([]);
+         }
+         episodeList.last.add(episode);
+});
+
+       episodeList.forEach((e) => print(e));
+
+    // });
+
+
+    //  var decoded=jsonDecode(response.body)['seasons'];
+    // var decoded2=jsonDecode(response.body)['episodes'];
+    // print(decoded);
+    // print(decoded2);
+
+  }
+  Future<void> rezkaApi(
+      ) async {
+    late String translatorId;
+    late String movieId;
+    String  contentType="";
     final pageResponse = await http
-        .get(Uri.parse("https://rezka.ag/films/action/43217-betmen-2022.html"));
+        .get(Uri.parse("https://rezka.ag/series/fantasy/45-igra-prestolov-2011.html"));
     dom.Document html = dom.Document.html(pageResponse.body);
-   html.getElementsByTagName("meta").forEach((element) {
-     if(element.attributes['property']=="og:type"){
-       if(element.attributes['content']! =="video.tv_series"){
-         content_type='initCDNSeriesEvents';
-       }else{
-         content_type='initCDNMoviesEvents';
-       }
-     }
-     }
-   );
-    if(html.getElementById("translators-list") != null){
-      translator_id=html.getElementById("translators-list")
-          !.children.first.attributes['data-translator_id']!;
-      var tmp = html.body!.text.split("sof.tv.$content_type").last.split("{")[0];
-      movie_id= tmp.split(',')[0].trim();
-    }else{
-      var tmp = html.body!.text.split("sof.tv.$content_type").last.split("{")[0];
-      translator_id= tmp.split(",")[1].trim();
-      movie_id= tmp.split(',')[0].trim();
+    html.getElementsByTagName("meta").forEach((element) {
+      if(element.attributes['property']=="og:type"){
+        if(element.attributes['content']! =="video.tv_series"){
+          contentType='initCDNSeriesEvents';
+        }else{
+          contentType='initCDNMoviesEvents';
+        }
+      }
     }
-     Map data=content_type=="initCDNMoviesEvents"?{'id': movie_id.replaceAll("(", ""), 'translator_id': translator_id, 'action': 'get_movie'}:{'id': movie_id.replaceAll("(", ""), 'translator_id': '55', 'season': '1', 'episode': '1', 'action': 'get_stream'};
-     print(data);
-     Map dataFilm = {'id': '52781', 'translator_id': '32', 'action': 'get_movie'};
-     print(dataFilm);
+    );
+    if(html.getElementById("translators-list") != null){
+      translatorId=html.getElementById("translators-list")
+      !.children.first.attributes['data-translator_id']!;
+      var tmp = html.body!.text.split("sof.tv.$contentType").last.split("{")[0];
+      movieId= tmp.split(',')[0].trim();
+    }else{
+      var tmp = html.body!.text.split("sof.tv.$contentType").last.split("{")[0];
+      translatorId= tmp.split(",")[1].trim();
+      movieId= tmp.split(',')[0].trim();
+    }
+    Map data=contentType=="initCDNMoviesEvents"?{'id': movieId.replaceAll("(", ""), 'translator_id': translatorId, 'action': 'get_movie'}:{'id': movieId.replaceAll("(", ""), 'translator_id': translatorId, 'season': '1', 'episode': '1', 'action': 'get_stream'};
     // Map dataSerial = {'id': '51367', 'translator_id': '55', 'season': '1', 'episode': '1', 'action': 'get_stream'};
     final response = await http
         .post(Uri.parse("https://rezka.ag/ajax/get_cdn_series/"), body: data);
@@ -125,12 +151,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       trashString = trashString.replaceAll(i, "");
     }
     List<String> finalString =
-        utf8.decode(base64Decode(trashString)).split(",");
-    for (var i in finalString) {
-      String res = i.split("[")[1].split("]")[0];
-      String video = i.split("[")[1].split("]")[1].split(" or ")[1];
-      print(res+": "+video);
-    }
+    utf8.decode(base64Decode(trashString)).split(",");
+    print(finalString.last.split("[")[1].split("]")[1].split(" or ")[1]);
   }
 
   Future<List<Film>> getMovies(http.Client client,String category,int page)async{
@@ -161,5 +183,5 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
 
   }
-
 }
+

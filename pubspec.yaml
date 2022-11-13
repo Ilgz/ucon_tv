@@ -33,6 +33,7 @@ dependencies:
   json_annotation : ^4.0.0
   flutter_bloc: ^8.1.0
   http: ^0.13.4
+  equatable: ^2.0.2
   flutter_vlc_player: ^7.1.5
   html: ^0.15.0
   chitose: ^1.1.0

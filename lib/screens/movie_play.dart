@@ -2,10 +2,13 @@ import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'package:new_ucon/constants.dart';
 import 'package:new_ucon/model/film.dart';
 import 'package:new_ucon/movie/movie_bloc.dart';
 import 'package:new_ucon/utils/actionHandler.dart';
 import 'package:new_ucon/widgets/VideoPlayer.dart';
+
+import '../widgets/series_dialog.dart';
 
 class MoviePlay extends StatefulWidget {
   Film film;
@@ -18,20 +21,25 @@ class MoviePlay extends StatefulWidget {
 
 class _MoviePlayState extends State<MoviePlay> {
   VlcPlayerController? _videoPlayerController;
+  List<int>? episodes;
+  late String movieId;
+  late String translatorId;
   bool controllerVisibility = true;
   FocusNode? playButtonFocus;
   FocusNode rewindButtonFocus = FocusNode();
   FocusNode forwardButtonFocus = FocusNode();
   FocusNode fullScreenButtonFocus = FocusNode();
+  FocusNode changeSeriesFocus = FocusNode();
   FocusNode backButtonFocus = FocusNode();
   bool isPlaying = true;
+  late Function activateController;
   bool isFullscreen = false;
   RestartableTimer? _timer; // late MovieBloc _bloc;
   @override
   void initState() {
     super.initState();
     BlocProvider.of<MovieBloc>(context)
-      ..add(LoadFilmLinkEvent(widget.film.siteLink,widget.film.name));
+      ..add(LoadFilmLinkEvent(widget.film.siteLink, widget.film.name));
   }
 
   @override
@@ -49,18 +57,29 @@ class _MoviePlayState extends State<MoviePlay> {
       playButtonFocus = FocusNode();
       FocusScope.of(context).requestFocus(playButtonFocus);
     }
-    return HandleRemoteActionsWidget(
-        child: Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-            image: Image.asset('assets/images/background_home.jpg').image,
-            fit: BoxFit.cover),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: buildUsualMode(),
-      ),
-    ));
+    return WillPopScope(
+      onWillPop: () async {
+        if (isFullscreen) {
+          isFullscreen = false;
+          setState(() {});
+          return false;
+        } else {
+          return true;
+        }
+      },
+      child: HandleRemoteActionsWidget(
+          child: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+              image: Image.asset('assets/images/background_home.jpg').image,
+              fit: BoxFit.cover),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: buildUsualMode(),
+        ),
+      )),
+    );
   }
 
   Widget buildUsualMode() {
@@ -76,13 +95,12 @@ class _MoviePlayState extends State<MoviePlay> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ClickRemoteActionWidget(
-                    enter: (){
-                      Navigator.pop(context);
-                    },
+                      enter: () {
+                        Navigator.pop(context);
+                      },
                       down: () {
                         FocusScope.of(context).requestFocus(playButtonFocus);
                         setState(() {});
-
                       },
                       child: Focus(
                           focusNode: backButtonFocus,
@@ -121,21 +139,8 @@ class _MoviePlayState extends State<MoviePlay> {
           flex: 3,
           child: Column(
             children: [
-              GestureDetector(
-                onTap:(){
-                  print("tapped");
-                  _videoPlayerController!.dispose();
-                  _videoPlayerController=VlcPlayerController.network(
-                     "https://i.imgur.com/7bMqysJ.mp4",
-                  );
-                  _videoPlayerController!.setLooping(true);
-                  //_videoPlayerController!.play();
-                },
-                child: Container(
-                  color: Colors.red,
-                  width: double.infinity,
-                  height: 68,
-                ),
+              Container(
+                height: isFullscreen ? 0 : 68,
               ),
               Expanded(flex: isFullscreen ? 1 : 0, child: buildFullMode()),
             ],
@@ -148,25 +153,27 @@ class _MoviePlayState extends State<MoviePlay> {
   BlocConsumer<MovieBloc, MovieState> buildFullMode() {
     return BlocConsumer<MovieBloc, MovieState>(
       buildWhen: (previousState, state) {
-        if (state is SeekBarUpdateState) {
-          return false;
-        } else {
+        if (state is LoadFilmLinkSuccessState) {
           return true;
+        } else {
+          return false;
         }
       },
       listener: (context, state) {
+        if (state is ChangeSeriesSuccessState) {
+          _videoPlayerController!.setMediaFromNetwork(state.filmLink);
+        }
         if (state is LoadFilmLinkSuccessState) {
-          print(state.playlist!.first.file);
-          print(state.filmLink.isEmpty);
+          movieId = state.movieId;
+          translatorId = state.translatorId;
+          episodes = state.episodes;
+
           _videoPlayerController = VlcPlayerController.network(
-            state.filmLink.isEmpty?state.playlist!.first.file.replaceAll("[480,720]", "720"):state.filmLink
-            ,
-          //  "https://i.imgur.com/7bMqysJ.mp4",
+            state.filmLink,
             hwAcc: HwAcc.auto,
             autoPlay: true,
             options: VlcPlayerOptions(),
           );
-
         }
       },
       builder: (context, state) {
@@ -204,16 +211,16 @@ class _MoviePlayState extends State<MoviePlay> {
                     _timer ??=
                         RestartableTimer(const Duration(seconds: 15), () {
                       controllerVisibility = false;
-                      changeFocus(playButtonFocus!);
+                      setState(() {});
                     });
-                    activateController() {
+                    activateController = () {
                       _timer?.reset();
                       if (!controllerVisibility) {
                         setState(() {
                           controllerVisibility = true;
                         });
                       }
-                    }
+                    };
 
                     return Positioned(
                         left: 0,
@@ -233,28 +240,23 @@ class _MoviePlayState extends State<MoviePlay> {
                                           MainAxisAlignment.center,
                                       children: [
                                         ClickRemoteActionWidget(
-                                            right: () {
+                                            left: () {
                                               activateController();
-                                              changeFocus(playButtonFocus!);
+                                            },
+                                            right: () {
+                                              if (controllerVisibility) {
+                                                changeFocus(playButtonFocus!);
+                                              }
+                                              activateController();
                                             },
                                             up: () {
-                                              activateController();
-                                              changeFocus(backButtonFocus!);
-                                              this.setState(() {});
+                                              upButton();
                                             },
                                             enter: () {
-                                              activateController();
-                                              _videoPlayerController!
-                                                  .seekTo(Duration(
-                                                      seconds:
-                                                          _videoPlayerController!
-                                                                  .value
-                                                                  .position
-                                                                  .inSeconds -
-                                                              10))
-                                                  .whenComplete(() =>
-                                                      changeFocus(
-                                                          rewindButtonFocus));
+                                              rewind(-10);
+                                            },
+                                            down: () {
+                                              downButton();
                                             },
                                             child: Focus(
                                                 focusNode: rewindButtonFocus,
@@ -269,32 +271,38 @@ class _MoviePlayState extends State<MoviePlay> {
                                         ),
                                         ClickRemoteActionWidget(
                                             enter: () {
-                                              if (_videoPlayerController!
-                                                  .value.isPlaying) {
-                                                _videoPlayerController!.pause();
-                                                isPlaying = false;
-                                                setState(() {});
-                                              } else {
-                                                _videoPlayerController!.play();
-                                                isPlaying = true;
-                                                setState(() {});
+                                              if (controllerVisibility) {
+                                                if (_videoPlayerController!
+                                                    .value.isPlaying) {
+                                                  _videoPlayerController!
+                                                      .pause();
+                                                  isPlaying = false;
+                                                  setState(() {});
+                                                } else {
+                                                  _videoPlayerController!
+                                                      .play();
+                                                  isPlaying = true;
+                                                  setState(() {});
+                                                }
                                               }
                                               activateController();
                                             },
                                             up: () {
-                                              activateController();
-                                              changeFocus(backButtonFocus!);
-                                              this.setState(() {});
+                                              upButton();
                                             },
                                             down: () {
-                                              activateController();
+                                              downButton();
                                             },
                                             right: () {
-                                              changeFocus(forwardButtonFocus);
+                                              if (controllerVisibility) {
+                                                changeFocus(forwardButtonFocus);
+                                              }
                                               activateController();
                                             },
                                             left: () {
-                                              changeFocus(rewindButtonFocus);
+                                              if (controllerVisibility) {
+                                                changeFocus(rewindButtonFocus);
+                                              }
                                               activateController();
                                             },
                                             child: Focus(
@@ -314,28 +322,28 @@ class _MoviePlayState extends State<MoviePlay> {
                                         ),
                                         ClickRemoteActionWidget(
                                             enter: () {
-                                              _videoPlayerController!.seekTo(
-                                                  Duration(
-                                                      seconds:
-                                                          _videoPlayerController!
-                                                                  .value
-                                                                  .position
-                                                                  .inSeconds +
-                                                              10));
-                                              activateController();
+                                              rewind(10);
                                             },
                                             right: () {
-                                              changeFocus(
-                                                  fullScreenButtonFocus);
+                                              if (controllerVisibility) {
+                                                episodes == null
+                                                    ? changeFocus(
+                                                        fullScreenButtonFocus)
+                                                    : changeFocus(
+                                                        changeSeriesFocus);
+                                              }
                                               activateController();
                                             },
                                             up: () {
-                                              activateController();
-                                              changeFocus(backButtonFocus!);
-                                              this.setState(() {});
+                                              upButton();
+                                            },
+                                            down: () {
+                                              downButton();
                                             },
                                             left: () {
-                                              changeFocus(playButtonFocus!);
+                                              if (controllerVisibility) {
+                                                changeFocus(playButtonFocus!);
+                                              }
                                               activateController();
                                             },
                                             child: Focus(
@@ -348,32 +356,105 @@ class _MoviePlayState extends State<MoviePlay> {
                                                         : Colors.white))),
                                       ],
                                     ),
-                                    Positioned(
-                                      right: 10,
-                                      child: ClickRemoteActionWidget(
-                                          up: () {
-                                            activateController();
-                                            changeFocus(backButtonFocus!);
-                                            this.setState(() {});
-                                          },
+                                    Visibility(
+                                      visible: episodes != null,
+                                      child: Positioned(
+                                        right: 50,
+                                        child: ClickRemoteActionWidget(
                                           enter: () {
-                                            this.setState(() {
-                                              if (isFullscreen) {
-                                                isFullscreen = false;
-                                              } else {
-                                                isFullscreen = true;
-                                              }
-                                            });
+                                            if (controllerVisibility) {
+                                              showDialog(
+                                                  barrierDismissible: false,
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) =>
+                                                          SeriesPopup(
+                                                            callback: (value) {
+                                                              BlocProvider.of<
+                                                                          MovieBloc>(
+                                                                      context)
+                                                                  .add(ChangeSeriesEvent(
+                                                                      value[0],
+                                                                      value[1],
+                                                                      movieId,
+                                                                      translatorId));
+                                                            },
+                                                            episodes: episodes!,
+                                                          ));
+                                            }
+                                            activateController();
+                                          },
+                                          right: () {
+                                            if (controllerVisibility) {
+                                              changeFocus(
+                                                  fullScreenButtonFocus);
+                                            }
                                             activateController();
                                           },
                                           left: () {
-                                            changeFocus(forwardButtonFocus!);
+                                            if (controllerVisibility) {
+                                              changeFocus(forwardButtonFocus);
+                                            }
+                                            activateController();
+                                          },
+                                          up: () {
+                                            upButton();
+                                          },
+                                          down: () {
+                                            downButton();
+                                          },
+                                          child: Focus(
+                                              focusNode: changeSeriesFocus,
+                                              child: Icon(Icons.settings,
+                                                  size: 26,
+                                                  color:
+                                                      changeSeriesFocus.hasFocus
+                                                          ? Colors.yellow
+                                                          : Colors.white)),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 10,
+                                      bottom: 0,
+                                      child: ClickRemoteActionWidget(
+                                          down: () {
+                                            downButton();
+                                          },
+                                          up: () {
+                                            upButton();
+                                          },
+                                          enter: () {
+                                            if (controllerVisibility) {
+                                              this.setState(() {
+                                                if (isFullscreen) {
+                                                  isFullscreen = false;
+                                                } else {
+                                                  isFullscreen = true;
+                                                }
+                                              });
+                                            }
+
+                                            activateController();
+                                          },
+                                          left: () {
+                                            if (controllerVisibility) {
+                                              episodes == null
+                                                  ? changeFocus(
+                                                      forwardButtonFocus)
+                                                  : changeFocus(
+                                                      changeSeriesFocus);
+                                            }
+
+                                            activateController();
+                                          },
+                                          right: () {
                                             activateController();
                                           },
                                           child: Focus(
                                               focusNode: fullScreenButtonFocus,
                                               child: Icon(Icons.fullscreen,
-                                                  size: 30,
+                                                  size: 32,
                                                   color: fullScreenButtonFocus
                                                           .hasFocus
                                                       ? Colors.yellow
@@ -384,6 +465,21 @@ class _MoviePlayState extends State<MoviePlay> {
                                 Center(
                                     child: MyVideoPlayer(
                                   vlcPlayerController: _videoPlayerController!,
+                                  upButtonIntent: () {
+                                    if (controllerVisibility) {
+                                      changeFocus(playButtonFocus!);
+                                    }
+                                    activateController();
+                                  },
+                                  leftButtonIntent: () {
+                                    rewind((-1*_videoPlayerController!.value.duration.inSeconds~/20));
+                                  },
+                                  activeController: () {
+                                    activateController();
+                                  },
+                                  rightButtonIntent: () {
+                                    rewind(_videoPlayerController!.value.duration.inSeconds~/20);
+                                  },
                                 )),
                               ],
                             ),
@@ -392,11 +488,44 @@ class _MoviePlayState extends State<MoviePlay> {
                   }),
                 ]));
           } else {
-            return Center(child: Text("Fucking"));
+            return filmContainer(isFullscreen);
           }
         }
-        return Container();
+        return filmContainer(isFullscreen);
       },
     );
   }
+
+  void rewind(int seconds) {
+    if (controllerVisibility) {
+      _videoPlayerController!.seekTo(Duration(
+          seconds: _videoPlayerController!.value.position.inSeconds + seconds));
+    }
+    activateController();
+  }
+
+  void downButton() {
+    if (controllerVisibility) {
+      FocusScope.of(context).requestFocus(MoviePlayClass.seekBarFocus);
+      setState(() {});
+    }
+    activateController();
+  }
+
+  void upButton() {
+    if (!isFullscreen && controllerVisibility) {
+      FocusScope.of(context).requestFocus(backButtonFocus);
+      setState(() {});
+    }
+    activateController();
+  }
+}
+
+Widget filmContainer(bool isFullscreen) {
+  return Container(
+    color: Colors.black87.withOpacity(1),
+    height: isFullscreen ? double.infinity : 360,
+    width: isFullscreen ? double.infinity : 640,
+    child: Center(child: CircularProgressIndicator(color: Colors.white)),
+  );
 }

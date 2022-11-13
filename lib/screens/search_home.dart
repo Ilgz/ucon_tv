@@ -110,7 +110,6 @@ class _SearchHomeState extends State<SearchHome> {
     return ClickRemoteActionWidget(
         down: () {
           _changeFocus(context, allFocusList?[0]);
-          print("down");
         },
         child: TextField(
             focusNode: _searchBarFocus,

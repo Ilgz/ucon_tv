@@ -1,24 +1,32 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:html/dom.dart' as dom;
-import 'package:html/dom.dart';
+import 'package:chitose/chitose.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
-import 'package:new_ucon/constants.dart';
-import 'package:new_ucon/model/serial.dart';
+import 'dart:convert';
+
+import '../constants.dart';
 
 part 'movie_event.dart';
 
 part 'movie_state.dart';
 
 class MovieBloc extends Bloc<MovieEvent, MovieState> {
+
   MovieBloc() : super(MovieInitial()) {
     on<LoadFilmLinkEvent>(_loadFilmLinkEvent);
     on<DisposeMovieEvent>(_disposeMovieEvent);
     on<SeekBarUpdateEvent>(_seekBarUpdateEvent);
+    on<ChangeSeriesEvent>(_changeSeriesEvent);
   }
-
+  Future<void> _changeSeriesEvent (ChangeSeriesEvent event,Emitter<MovieState> emit)async{
+    List<String> stream=await getStream("initCDNSeriesEvents", event.movieId, event.translatorId, event.season, event.episode);
+   emit(ChangeSeriesSuccessState(stream[0]));
+  }
   Future<void> _seekBarUpdateEvent(
       SeekBarUpdateEvent event, Emitter<MovieState> emit) async {
     emit(SeekBarUpdateState(event.length, event.currentPosition,
@@ -71,31 +79,82 @@ class MovieBloc extends Bloc<MovieEvent, MovieState> {
   Future<void> _loadFilmLinkEvent(
       LoadFilmLinkEvent event, Emitter<MovieState> emit) async {
     emit(LoadFilmLinkLoadingState());
-    final response = await http.get(Uri.parse(event.filmLink));
-    dom.Document html = dom.Document.html(response.body);
-    if (event.filmName.contains("Сезон")) {
-      String txtLink="";
-      List<String> embedScripts= html.getElementsByTagName("script").map((e) => e.text.trim()).toList();
-      for(final e in embedScripts){
-        if(e.contains(".txt")){
-          Iterable<RegExpMatch> matches = regExpLink.allMatches(e);
-          txtLink=e.substring(matches.first.start, matches.first.end);
-        }
-      }
-      Playlist playlist=playlistFromJson((await http.get(Uri.parse(txtLink))).body);
-      emit(LoadFilmLinkSuccessState(playlist: playlist.playlist));
+    List<String> stream=await getDetails(event.filmLink);
+    String streamLink=stream[0];
+    if(stream[1]=="initCDNSeriesEvents"){
+      var episodes=await getEpisodes(stream[2], stream[3]);
+      emit(LoadFilmLinkSuccessState(filmLink: streamLink,episodes: episodes,movieId: stream[2],translatorId: stream[3]));
     }else{
-      final title =
-      html.getElementsByTagName("script").map((e) => e.text.trim()).toList();
-      for (final e in title) {
-        if (e.contains("playerjshd")) {
-          Iterable<RegExpMatch> matches = regExpLink.allMatches(e);
-          for (var match in matches) {
-            emit(LoadFilmLinkSuccessState(filmLink:e.substring(match.start, match.end)));
-          }
+      emit(LoadFilmLinkSuccessState(filmLink: streamLink,movieId: stream[2],translatorId: stream[3] ));
+    }
+  }
+  Future<List<int>> getEpisodes(String id,String translatorId) async{
+    List<int> episodeList=[];
+    Map dataSerial = {'id': id, 'translator_id': translatorId, 'action': 'get_episodes'};
+    final response = await http
+        .post(Uri.parse("https://rezka.ag/ajax/get_cdn_series/"), body: dataSerial);
+    dom.Document episodes = dom.Document.html(jsonDecode(response.body)['episodes']);
+    episodes.getElementsByClassName("b-simple_episode__item").forEach((element) {
+      int episode= int.parse(element.attributes['data-episode_id']!);
+        episodeList.add(episode);
+    });
+    return episodeList;
+  }
+  Future<List<String>> getDetails(String siteLink,{int season=1,int episode=1})async{
+    late String translatorId;
+    late String movieId;
+    String  contentType="";
+    if(siteLink[0]=="/"){
+      siteLink=rezkaServer+siteLink;
+    }
+    final pageResponse = await http
+        .get(Uri.parse(siteLink));
+    dom.Document html = dom.Document.html(pageResponse.body);
+    html.getElementsByTagName("meta").forEach((element) {
+      if(element.attributes['property']=="og:type"){
+        if(element.attributes['content']! =="video.tv_series"){
+          contentType='initCDNSeriesEvents';
+        }else{
+          contentType='initCDNMoviesEvents';
         }
       }
     }
+    );
+    if(html.getElementById("translators-list") != null){
+      translatorId=html.getElementById("translators-list")
+      !.children.first.attributes['data-translator_id']!;
+      var tmp = html.body!.text.split("sof.tv.$contentType").last.split("{")[0];
+      movieId= tmp.split(',')[0].trim();
+    }else{
+      var tmp = html.body!.text.split("sof.tv.$contentType").last.split("{")[0];
+      translatorId= tmp.split(",")[1].trim();
+      movieId= tmp.split(',')[0].trim();
+    }
+    movieId=movieId.replaceAll("(", "");
+  return   getStream(contentType,movieId,translatorId,1,1);
 
+  }
+  Future<List<String>> getStream(String contentType,String movieId,String translatorId,int season,int episode)async{
+    Map data=contentType=="initCDNMoviesEvents"?{'id': movieId, 'translator_id': translatorId, 'action': 'get_movie'}:{'id': movieId, 'translator_id': translatorId, 'season': season.toString(), 'episode': episode.toString(), 'action': 'get_stream'};
+    final response = await http
+        .post(Uri.parse("https://rezka.ag/ajax/get_cdn_series/"), body: data);
+    String rawList = jsonDecode(response.body)['url'].toString();
+    List<String> trashList = ["@", "#", "!", "^", "\$"];
+    List<String> trashCodesSet = [];
+    for (int i = 2; i < 4; i++) { 
+      String startChar = '';
+      for (final chars in trashList.product(i)) {
+        var dataBytes = utf8.encode(chars.join(startChar));
+        var trashCombo = base64Encode(dataBytes);
+        trashCodesSet.add(trashCombo);
+      }
+    }
+    String trashString = rawList.replaceAll("#h", "").split("//_//").join('');
+    for (var i in trashCodesSet) {
+      trashString = trashString.replaceAll(i, "");
+    }
+    List<String> finalString =
+    utf8.decode(base64Decode(trashString)).split(",");
+    return [finalString.last.split("[")[1].split("]")[1].split(" or ")[1],contentType,movieId,translatorId];
   }
 }

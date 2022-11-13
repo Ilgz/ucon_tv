@@ -6,12 +6,18 @@ import '../home/home_bloc.dart';
 import '../model/film.dart';
 import '../screens/movie_play.dart';
 import '../utils/actionHandler.dart';
-class MySlider extends StatelessWidget {
+class MySlider extends StatefulWidget {
   final LoadHomeDataSuccessState state;
   final ScrollController pageController;
   final Function setStateFunction;
   final BuildContext mainContext;
   const MySlider({Key? key,required this.state,required this.pageController,required this.setStateFunction,required this.mainContext}) : super(key: key);
+
+  @override
+  State<MySlider> createState() => _MySliderState();
+}
+
+class _MySliderState extends State<MySlider> {
   @override
   Widget build(BuildContext context) {
     return ClickRemoteActionWidget(
@@ -22,34 +28,33 @@ class MySlider extends StatelessWidget {
               MaterialPageRoute(
                   builder: (context) => MoviePlay(
                       film: Film(
-                          name: state.sliderList[HomeClass.activeIndex].name,
-                          imageLink: state
+                          name: widget.state.sliderList[HomeClass.activeIndex].name,
+                          imageLink: widget.state
                               .sliderList[HomeClass.activeIndex].intentImgUrl,
-                          siteLink: state.sliderList[HomeClass.activeIndex]
+                          siteLink: widget.state.sliderList[HomeClass.activeIndex]
                               .intentSiteLink))));
         }
       },
       up: () {
-        FocusScope.of(mainContext).requestFocus(HomeClass.profileFocus);
-        setStateFunction();
+        FocusScope.of(widget.mainContext).requestFocus(HomeClass.profileFocus);
+        widget.setStateFunction();
       },
       right: () {
         HomeClass.carouselController.nextPage(
               duration: const Duration(milliseconds: 500));
-        setStateFunction();
+
       },
       left: () {
           HomeClass.carouselController.previousPage(
               duration: const Duration(milliseconds: 500));
-         setStateFunction();
         },
       down: () {
         if (HomeClass.movieElements[0].elementsFocus != null) {
-          pageController.animateTo(270,
+          widget.pageController.animateTo(270,
               duration: const Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
-          FocusScope.of(mainContext).requestFocus(HomeClass.movieElements[0].elementsFocus![HomeClass.movieElements[0].lastElement]);
-          setStateFunction();
+          FocusScope.of(widget.mainContext).requestFocus(HomeClass.movieElements[0].elementsFocus![HomeClass.movieElements[0].lastElement]);
+          widget.setStateFunction();
 
         }
       },
@@ -65,24 +70,27 @@ class MySlider extends StatelessWidget {
               enableInfiniteScroll: true,
               onPageChanged: (index, reason) {
                 HomeClass.activeIndex = index;
-                setStateFunction();
+                setState(() {
+
+                });
               },
             ),
-            itemCount: state.sliderList.length,
+            itemCount: widget.state.sliderList.length,
             itemBuilder: (context, index, realIndex) {
-              final urlImage = state.sliderList[index].link;
+              final urlImage = widget.state.sliderList[index].link;
               return buildImage(
                   urlImage,
                   index,
-                  state.sliderList[index].name,
-                  state.sliderList[index].intentImgUrl,
-                  state.sliderList[index].intentSiteLink);
+                  widget.state.sliderList[index].name,
+                  widget.state.sliderList[index].intentImgUrl,
+                  widget.state.sliderList[index].intentSiteLink);
             },
           ),
         ),
       ),
     );
   }
+
   Widget buildImage(
       String urlImage,
       int index,
@@ -127,7 +135,6 @@ class MySlider extends StatelessWidget {
         ),
       );
   }
-
 }
 
 

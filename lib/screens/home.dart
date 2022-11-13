@@ -1,4 +1,3 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_ucon/channels.dart';
@@ -22,7 +21,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   ScrollController pageController = ScrollController();
-  CarouselController carouselController = CarouselController();
   late List<FocusNode> firstRowFocus,secondRowFocus;
   int lastElement=0;
   ScrollController channelScrollController=ScrollController();
@@ -43,6 +41,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    print("builded");
     if (isFirst) {
       FocusScope.of(context).requestFocus(HomeClass.sliderFocusNode);
       isFirst=false;
@@ -62,7 +61,7 @@ class _HomePageState extends State<HomePage> {
               actions: [
                 ClickRemoteActionWidget(
                     right: () {
-                      _changeFocus(context, HomeClass.profileFocus);
+                      changeFocus(context, HomeClass.profileFocus);
                     },
                     enter: () {
                       Navigator.push(
@@ -71,7 +70,7 @@ class _HomePageState extends State<HomePage> {
                               builder: (context) => SearchHome()));
                     },
                     down: () {
-                      _changeFocus(context, HomeClass.sliderFocusNode!);
+                      changeFocus(context, HomeClass.sliderFocusNode!);
                     },
                     child: Focus(
                       focusNode: HomeClass.searchFocus,
@@ -85,7 +84,7 @@ class _HomePageState extends State<HomePage> {
                 SizedBox(width: 20,),
                 ClickRemoteActionWidget(
                     left: () {
-                      _changeFocus(context, HomeClass.searchFocus);
+                      changeFocus(context, HomeClass.searchFocus);
                     },
                     enter: () {
                       Navigator.push(
@@ -94,7 +93,7 @@ class _HomePageState extends State<HomePage> {
                               builder: (context) => Profile()));
                     },
                     down: () {
-                      _changeFocus(context, HomeClass.sliderFocusNode!);
+                      changeFocus(context, HomeClass.sliderFocusNode!);
                       pageController.animateTo(0,
                           duration: Duration(milliseconds: 500),
                           curve: Curves.fastOutSlowIn);
@@ -122,6 +121,7 @@ class _HomePageState extends State<HomePage> {
       child: BlocConsumer<HomeBloc, HomeState>(
         buildWhen: (context,state){
           if(state is LoadHomeDataSuccessState){
+            print("reBuildState");
             return true;
           }else{
             return false;
@@ -140,7 +140,7 @@ class _HomePageState extends State<HomePage> {
                 element.elementsFocus ??= List.generate(
                     state.serialList.length, (index) => FocusNode());
               }
-              else if(element.sectionName=="Премъеры"){
+              else if(element.sectionName=="Премьеры"){
                 element.elements=state.premierList;
                 element.elementsFocus ??= List.generate(
                     state.premierList.length, (index) => FocusNode());
@@ -167,11 +167,12 @@ class _HomePageState extends State<HomePage> {
                 MySlider(state: state, pageController: pageController,setStateFunction: (){
                   setState(() {});
                 },mainContext: context,),
-              ...buildSection(HomeClass.movieElements[0]),
-              ...buildChannelSection(),
-              ...buildSection(HomeClass.movieElements[1]),
-              ...buildSection(HomeClass.movieElements[2]),
-              ...buildSection(HomeClass.movieElements[3]),
+
+              buildSection(HomeClass.movieElements[0]),
+            buildChannelSection(),
+              buildSection(HomeClass.movieElements[1]),
+              buildSection(HomeClass.movieElements[2]),
+              buildSection(HomeClass.movieElements[3]),
             ]);
           }
           return Container();
@@ -181,172 +182,198 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-  List<Widget> buildChannelSection(){
-    return [
-      SizedBox(height: 20),
-      Container(
-          alignment: Alignment.centerLeft,
-          margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-          child: Text(
-            "Каналы",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.cyan),
-          )),
-      Container(
-        height: 100,
-        child:
-        ListView.builder(
-          controller: channelScrollController,
-          shrinkWrap: true,
-          primary: false,
+  Widget buildChannelSection(){
+      return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return   Column(
+              children: [
+                SizedBox(height: 20),
+                Container(
+                    alignment: Alignment.centerLeft,
+                    margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    child: Text(
+                      "Каналы",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.cyan),
+                    )),
+                Container(
+                  height: 100,
+                  child:
+                  ListView.builder(
+                    controller: channelScrollController,
+                    shrinkWrap: true,
+                    primary: false,
 
-          scrollDirection: Axis.horizontal,
-          itemCount: getDoubleChannels()[0].length,
-          itemBuilder: (context, index) {
-            return buildChannelItem(
-                getDoubleChannels()[0][index], index, firstRowFocus[index],0);
-          },
-        ),
-      ),
-      Container(
-        height: 100,
-        child:
-        ListView.builder(
-          controller: channelScrollController,
-          shrinkWrap: true,
-          primary: false,
-          scrollDirection: Axis.horizontal,
-          itemCount: getDoubleChannels()[1].length,
-          itemBuilder: (context, index) {
-            return buildChannelItem(
-                getDoubleChannels()[1][index], index,secondRowFocus[index],1);
-          },
-        ),
-      )
-    ];
+                    scrollDirection: Axis.horizontal,
+                    itemCount: getDoubleChannels()[0].length,
+                    itemBuilder: (context, index) {
+                      return buildChannelItem(
+                          getDoubleChannels()[0][index], index,
+                          firstRowFocus[index], 0,setState);
+                    },
+                  ),
+                ),
+                Container(
+                  height: 100,
+                  child:
+                  ListView.builder(
+                    controller: channelScrollController,
+                    shrinkWrap: true,
+                    primary: false,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: getDoubleChannels()[1].length,
+                    itemBuilder: (context, index) {
+                      return buildChannelItem(
+                          getDoubleChannels()[1][index], index,
+                          secondRowFocus[index], 1,setState);
+                    },
+                  ),
+                )
+              ],
+            );
+          }
+      );
+
   }
-  Widget buildChannelItem(Channel channel,int index,FocusNode focusNode,int row){
+  Widget buildChannelItem(Channel channel,int index,FocusNode focusNode,int row,StateSetter setState){
+    _changeFocus(FocusNode focusNode) {
+      setState(() {
+        FocusScope.of(this.context).requestFocus(focusNode);
+      });
+    }
     return ClickRemoteActionWidget(
-        enter: () {
-      // Navigator.push(context,
-      //     MaterialPageRoute(builder: (context) => MoviePlay(film: item)));
-    },
-    up: () {
-      if(row==1){
-        _changeFocus(context, firstRowFocus[index]);
-      }else{
-        if (HomeClass.movieElements[0].elementsFocus != null) {
-          lastElement=index;
-          pageController.animateTo(270,
-              duration: Duration(milliseconds: 500),
-              curve: Curves.fastOutSlowIn);
-          _changeFocus(
-              context, HomeClass.movieElements[0].elementsFocus![HomeClass.movieElements[0].lastElement]);
-        }
-      }
-    },
-    right: () {
-          if(row==0){
-            if ((firstRowFocus.length - 1) != index) {
-              _changeFocus(context, firstRowFocus[index + 1]);
-              channelScrollController.animateTo((index + 1) * 160,
-                  duration: Duration(milliseconds: 500),
-                  curve: Curves.fastOutSlowIn);
-            }
-          }else{
-            if ((secondRowFocus.length - 1) != index) {
-              _changeFocus(context, secondRowFocus[index + 1]);
-              channelScrollController.animateTo((index + 1) * 160,
-                  duration: Duration(milliseconds: 500),
-                  curve: Curves.fastOutSlowIn);
-            }
-          }
-
-
-    },
-    down: () {
-        if(row==0){
-          _changeFocus(context, secondRowFocus[index]);
+          enter: () {
+      },
+      up: () {
+        if(row==1){
+          _changeFocus( firstRowFocus[index]);
         }else{
-          _changeFocus(context, HomeClass.movieElements[1].elementsFocus![HomeClass.movieElements[1].lastElement]);
-          lastElement=index;
-          pageController.animateTo(610,
-              duration: Duration(milliseconds: 500),
-              curve: Curves.fastOutSlowIn);
-        }
-    },
-    left: () {
-        if (index != 0) {
-          if(row==0){
-            _changeFocus(context, firstRowFocus[index - 1]);
-          }else{
-            _changeFocus(context, secondRowFocus[index - 1]);
-
+          if (HomeClass.movieElements[0].elementsFocus != null) {
+            lastElement=index;
+            pageController.animateTo(270,
+                duration: Duration(milliseconds: 500),
+                curve: Curves.fastOutSlowIn);
+            changeFocus(context,
+                 HomeClass.movieElements[0].elementsFocus![HomeClass.movieElements[0].lastElement]);
           }
-          channelScrollController.animateTo((index - 1) * 160,
-              duration: Duration(milliseconds: 500),
-              curve: Curves.fastOutSlowIn);
         }
+      },
+      right: () {
+            if(row==0){
+              if ((firstRowFocus.length - 1) != index) {
+                _changeFocus(firstRowFocus[index + 1]);
+                channelScrollController.animateTo((index + 1) * 160,
+                    duration: Duration(milliseconds: 500),
+                    curve: Curves.fastOutSlowIn);
+              }
+            }else{
+              if ((secondRowFocus.length - 1) != index) {
+                _changeFocus( secondRowFocus[index + 1]);
+                channelScrollController.animateTo((index + 1) * 160,
+                    duration: Duration(milliseconds: 500),
+                    curve: Curves.fastOutSlowIn);
+              }
+            }
 
-    },
-    child: Focus(
-    focusNode: focusNode,
-    child: Container(
-    width: 160,
-    child: Card(
-    elevation: 5.0,
-    clipBehavior: Clip.antiAlias,
-    margin: focusNode.hasFocus
-    ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
-        : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    color: Colors.transparent,
-    child: Container(
-    decoration: BoxDecoration(
-    border: focusNode.hasFocus
-    ? Border.all(color: Colors.yellow, width: 3)
-        : null),
-    child:
-      Image.network(
-      channel.imageLink,
-      fit: BoxFit.fill,
-        height: double.infinity,
-        width: double.infinity,
-    ),
-    ),
-    ),
-    ),
-    ),
-    );
+
+      },
+      down: () {
+          if(row==0){
+            _changeFocus( secondRowFocus[index]);
+          }else{
+            changeFocus(context,HomeClass.movieElements[1].elementsFocus![HomeClass.movieElements[1].lastElement]);
+            lastElement=index;
+            pageController.animateTo(610,
+                duration: Duration(milliseconds: 500),
+                curve: Curves.fastOutSlowIn);
+          }
+      },
+      left: () {
+          if (index != 0) {
+            if(row==0){
+              _changeFocus( firstRowFocus[index - 1]);
+            }else{
+              _changeFocus(secondRowFocus[index - 1]);
+
+            }
+            channelScrollController.animateTo((index - 1) * 160,
+                duration: Duration(milliseconds: 500),
+                curve: Curves.fastOutSlowIn);
+          }
+
+      },
+      child: Focus(
+      focusNode: focusNode,
+      child: Container(
+      width: 160,
+      child: Card(
+      elevation: 5.0,
+      clipBehavior: Clip.antiAlias,
+      margin: focusNode.hasFocus
+      ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
+          : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      color: Colors.transparent,
+      child: Container(
+      decoration: BoxDecoration(
+      border: focusNode.hasFocus
+      ? Border.all(color: Colors.yellow, width: 3)
+          : null),
+      child:
+        Image.network(
+        channel.imageLink,
+        fit: BoxFit.fill,
+          height: double.infinity,
+          width: double.infinity,
+      ),
+      ),
+      ),
+      ),
+      ),
+      );
+
   }
-  List<Widget> buildSection(MovieElement movieElement) {
-    return [
-      SizedBox(height: 20),
-      Container(
-          alignment: Alignment.centerLeft,
-          margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-          child: Text(
-            movieElement.sectionName.toUpperCase(),
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.cyan),
-          )),
-      Container(
-          height: 220,
-          child:
-            ListView.builder(
-              shrinkWrap: true,
-              primary: false,
-              controller: movieElement.scrollController,
-              scrollDirection: Axis.horizontal,
-              itemCount: movieElement.elements.length,
-              itemBuilder: (context, index) {
-                return buildMovieItem(
-                    movieElement.elements[index], index, movieElement);
-              },
-            ),
-          )
-    ];
+  Widget  buildSection(MovieElement movieElement) {
+      return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Column(
+              children: [
+                SizedBox(height: 20),
+
+                Container(
+                    alignment: Alignment.centerLeft,
+                    margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    child: Text(
+                      movieElement.sectionName.toUpperCase(),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.cyan),
+                    )),
+                Container(
+                  height: 220,
+                  child:
+                  ListView.builder(
+                    shrinkWrap: true,
+                    primary: false,
+                    controller: movieElement.scrollController,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: movieElement.elements.length,
+                    itemBuilder: (context, index) {
+                      return buildMovieItem(
+                          movieElement.elements[index], index, movieElement,setState);
+                    },
+                  ),
+                )
+              ],
+            );
+          } );
   }
 
   Widget buildMovieItem(
-      Film item, int index, MovieElement movieElement) {
+      Film item, int index, MovieElement movieElement,StateSetter setState) {
+    _changeFocus(FocusNode focusNode) {
+      setState(() {
+        FocusScope.of(this.context).requestFocus(focusNode);
+      });
+    }
     return ClickRemoteActionWidget(
       enter: () {
         Navigator.push(context,
@@ -354,34 +381,42 @@ class _HomePageState extends State<HomePage> {
       },
       up: () {
         if (movieElement.sectionIndex == 0) {
-          _changeFocus(context, HomeClass.sliderFocusNode);
+          changeFocus(context, HomeClass.sliderFocusNode);
           movieElement.lastElement = index;
           pageController.animateTo(0,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         } else if (movieElement.sectionIndex  == 1) {
-          _changeFocus(context, secondRowFocus[lastElement]);
+          changeFocus(context, secondRowFocus[lastElement]);
           movieElement.lastElement = index;
           pageController.animateTo(500,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         } else if (movieElement.sectionIndex == 2) {
-          _changeFocus(context, HomeClass.movieElements[1].elementsFocus![HomeClass.movieElements[1].lastElement]);
+          changeFocus(context, HomeClass.movieElements[1].elementsFocus![HomeClass.movieElements[1].lastElement]);
           movieElement.lastElement=index;
           pageController.animateTo(610,
+              duration: Duration(milliseconds: 500),
+              curve: Curves.fastOutSlowIn);
+
+        }
+        else if (movieElement.sectionIndex == 3) {
+          changeFocus(context, HomeClass.movieElements[2].elementsFocus![HomeClass.movieElements[2].lastElement]);
+          movieElement.lastElement=index;
+          pageController.animateTo(850,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         }
       },
       right: () {
         if (movieElement.elementsFocus != null && (movieElement.elementsFocus!.length - 1) != index) {
-          _changeFocus(context, movieElement.elementsFocus![index + 1]);
+          _changeFocus(movieElement.elementsFocus![index + 1]);
           movieElement.scrollController.animateTo((index + 1) * 135,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         }
         else{
-          if(movieElement.sectionName!="Премъеры"){
+          if(movieElement.sectionName!="Премьеры"){
           if(!loading){
               BlocProvider.of<HomeBloc>(context)..add(UpdateMovieEvent(movieElement.sectionName));
             loading=true;
@@ -392,16 +427,22 @@ class _HomePageState extends State<HomePage> {
       },
       down: () {
         if (movieElement.sectionIndex == 0) {
-          _changeFocus(context, firstRowFocus[lastElement]);
+          changeFocus(context, firstRowFocus[lastElement]);
           movieElement.lastElement = index;
           pageController.animateTo(500,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         }
         else if (movieElement.sectionIndex == 1) {
-          _changeFocus(context, HomeClass.movieElements[2].elementsFocus![HomeClass.movieElements[2].lastElement]);
+          changeFocus(context, HomeClass.movieElements[2].elementsFocus![HomeClass.movieElements[2].lastElement]);
           movieElement.lastElement = index;
           pageController.animateTo(850,
+              duration: Duration(milliseconds: 500),
+              curve: Curves.fastOutSlowIn);
+        }else if(movieElement.sectionIndex==2){
+          changeFocus(context, HomeClass.movieElements[3].elementsFocus![HomeClass.movieElements[3].lastElement]);
+          movieElement.lastElement = index;
+          pageController.animateTo(1100,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         }
@@ -409,7 +450,7 @@ class _HomePageState extends State<HomePage> {
       },
       left: () {
         if (movieElement.elementsFocus != null && index != 0) {
-          _changeFocus(context, movieElement.elementsFocus![index - 1]);
+          _changeFocus(movieElement.elementsFocus![index - 1]);
           movieElement.scrollController.animateTo((index - 1) * 135,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
@@ -460,7 +501,7 @@ class _HomePageState extends State<HomePage> {
 
 
 
-  _changeFocus(BuildContext context, FocusNode node) {
+  changeFocus(BuildContext context, FocusNode node) {
     FocusScope.of(context).requestFocus(node);
     setState(() {});
   }

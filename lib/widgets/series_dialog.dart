@@ -1,61 +1,125 @@
 import 'package:flutter/material.dart';
 
-import '../model/serial.dart';
 import '../utils/actionHandler.dart';
 class SeriesPopup extends StatefulWidget {
-  final Function(int) callback;
-  final List<PlaylistElement> playList;
-  const SeriesPopup({super.key, required this.callback,required this.playList});
+  final Function(List<int>) callback;
+  final List<int> episodes;
+  const SeriesPopup({super.key, required this.callback,required this.episodes});
   @override
   State<SeriesPopup> createState() => _SeriesPopupState();
 }
 
 class _SeriesPopupState extends State<SeriesPopup> {
-
- late  List<FocusNode> seriesFocusNode ;
+  List<List<int>> episodeList=[];
+ late  List<FocusNode> seasonsFocusNode ;
+ late  List<FocusNode> episodesFocusNode ;
   bool isFirst=true;
-
+  int? seasonIndex;
+  ScrollController scrollController=ScrollController();
+  @override
+  void initState() {
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     if(isFirst){
-  seriesFocusNode  = List.generate(widget.playList.length, (index) => FocusNode());
-      _changeFocus(seriesFocusNode.last);
+      for (var element in widget.episodes) {
+        if(element==1) {
+          episodeList.add([]);
+        }
+        episodeList.last.add(element);
+        }
+  seasonsFocusNode  = List.generate(episodeList.length, (index) => FocusNode());
+      _changeFocus(seasonsFocusNode.first);
       isFirst=false;
     }
     return Dialog(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white70,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16.0))),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 15),
+        padding: EdgeInsets.all(8),
         child: HandleRemoteActionsWidget(
-          child: ListView.builder(shrinkWrap:true,itemCount:widget.playList.length,itemBuilder: (BuildContext context,int index){
+          child: Container(
+            width: 400,
+            child: ListView.builder(controller:scrollController,shrinkWrap:true,itemCount:seasonIndex!=null?episodeList[seasonIndex!].length:episodeList.length,itemBuilder: (BuildContext context,int index){
     return ClickRemoteActionWidget(
       down: (){
-        if(index!=(seriesFocusNode.length-1)){
-          _changeFocus(seriesFocusNode[index+1]);
+        if(seasonIndex!=null){
+              if(index!=(episodesFocusNode.length-1)){
+                _changeFocus(episodesFocusNode[index+1]);
+                scrollController.animateTo((index+1 ) * 60,
+                    duration: Duration(milliseconds: 500),
+                    curve: Curves.fastOutSlowIn);
+              }
+        }else{
+              if(index!=(seasonsFocusNode.length-1)){
+                _changeFocus(seasonsFocusNode[index+1]);
+                scrollController.animateTo((index+1 ) * 60,
+                    duration: Duration(milliseconds: 500),
+                    curve: Curves.fastOutSlowIn);
+              }
+
         }
+
       },up:(){
-      if(index!=0){
-        _changeFocus(seriesFocusNode[index-1]);
-      }
+        if(seasonIndex!=null){
+              if(index!=0){
+                _changeFocus(episodesFocusNode[index-1]);
+                scrollController.animateTo((index-1 ) * 60,
+                    duration: Duration(milliseconds: 500),
+                    curve: Curves.fastOutSlowIn);
+              }
+        }else{
+              if(index!=0){
+                _changeFocus(seasonsFocusNode[index-1]);
+                scrollController.animateTo((index-1 ) * 60,
+                    duration: Duration(milliseconds: 500),
+                    curve: Curves.fastOutSlowIn);
+              }
+        }
+
     },
       enter: (){
-        widget.callback(index);
-        Navigator.pop(context);
+        if(seasonIndex!=null){
+              widget.callback([(seasonIndex!+1),episodeList[seasonIndex!][index]]);
+              Navigator.pop(context);
+        }
+        else{
+              seasonIndex=index;
+              episodesFocusNode=List.generate(episodeList[seasonIndex!].length, (index) => FocusNode());
+              _changeFocus(episodesFocusNode.first);
+              setState(() {
+              });
+        }
       },
       child: Focus(
-        focusNode: seriesFocusNode[index],
-        child: ListTile(
-          tileColor: index==3?Colors.yellow:Colors.black,
-        leading:  Icon(Icons.play_arrow_outlined,color: seriesFocusNode[index].hasFocus?Colors.yellow:Colors.black,),
-
-        title: Text("${index+1} Серия",style:TextStyle(color: Colors.white))),
+        focusNode: seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index],
+        child:
+        Container(
+          decoration: BoxDecoration(border: Border(top: BorderSide())),
+          child: Container(
+            height: 60,
+            child: ListTile(
+                tileColor: (seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.yellow:Colors.white70,
+                leading: CircleAvatar(
+                      backgroundColor: const Color(0xff6ae792),
+                      child: Text(
+                        (index+1).toString(),
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+       // leading:  Icon(Icons.play_arrow_outlined,color: (seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.yellow:Colors.black,),
+            title: Text(seasonIndex!=null?"Серия":"Сезон",textAlign:TextAlign.start,style:TextStyle(color: Colors.black))),
+          ),
+        )
+        ,
       ),
     );
-          })
+              }),
+          ),
+          )
         ),
-      ),
     );
   }
   _changeFocus(FocusNode focusNode){
