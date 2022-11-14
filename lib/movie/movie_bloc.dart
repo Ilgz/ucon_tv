@@ -16,7 +16,6 @@ part 'movie_event.dart';
 part 'movie_state.dart';
 
 class MovieBloc extends Bloc<MovieEvent, MovieState> {
-
   MovieBloc() : super(MovieInitial()) {
     on<LoadFilmLinkEvent>(_loadFilmLinkEvent);
     on<DisposeMovieEvent>(_disposeMovieEvent);

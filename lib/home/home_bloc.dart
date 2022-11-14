@@ -4,7 +4,6 @@ import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:chitose/chitose.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:new_ucon/constants.dart';
@@ -23,7 +22,39 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   HomeBloc() : super(HomeInitial()) {
     on<LoadHomeDataEvent>(_loadHomeDataEvent);
     on<UpdateMovieEvent>(_updateMovieEvent);
+    on<UpdateCategoryMovieEvent>(_updateCategoryMovieEvent);
     on<SearchMovieEvent>(_searchMovieEvent);
+  }
+  Future<void> _updateCategoryMovieEvent(UpdateCategoryMovieEvent event, Emitter<HomeState> emit) async{
+    if(event.page==1){
+      emit(UpdateCategoryMovieLoading());
+    }
+    late String category;
+    if(event.category=="Фильмы"){
+      category="films";
+
+    }else if(event.category=="Сериалы"){
+      category="series";
+    }else if(event.category=="Мультфильмы"){
+      category="cartoons";
+    }
+    else if(event.category=="Премьеры"){
+      category="premiers";
+    }
+    else{
+      category=event.category;
+    }
+    print(category);
+    var client = http.Client();
+    try{
+      final movieList=await getMovies(client, category,event.page);
+      print(movieList.last.name);
+      print(category);
+      emit(UpdateCategoryMovieSuccess(movieList,event.page));
+    } finally {
+      client.close();
+    }
+
   }
   Future<void> _searchMovieEvent(SearchMovieEvent event,Emitter<HomeState> emit)async{
     List<Film> _finalList = [];

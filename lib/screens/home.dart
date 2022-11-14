@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_ucon/channels.dart';
 import 'package:new_ucon/model/movie_element.dart';
+import 'package:new_ucon/screens/category.dart';
 import 'package:new_ucon/screens/profile.dart';
 import 'package:new_ucon/screens/search_home.dart';
 import 'package:new_ucon/widgets/slider.dart';
@@ -41,7 +42,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    print("builded");
     if (isFirst) {
       FocusScope.of(context).requestFocus(HomeClass.sliderFocusNode);
       isFirst=false;
@@ -281,7 +281,7 @@ class _HomePageState extends State<HomePage> {
           if(row==0){
             _changeFocus( secondRowFocus[index]);
           }else{
-            changeFocus(context,HomeClass.movieElements[1].elementsFocus![HomeClass.movieElements[1].lastElement]);
+            changeFocus(context,HomeClass.movieElements[1].categoryFocus);
             lastElement=index;
             pageController.animateTo(610,
                 duration: Duration(milliseconds: 500),
@@ -339,14 +339,50 @@ class _HomePageState extends State<HomePage> {
               children: [
                 SizedBox(height: 20),
 
-                Container(
-                    alignment: Alignment.centerLeft,
-                    margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                    child: Text(
-                      movieElement.sectionName.toUpperCase(),
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.cyan),
-                    )),
+                ClickRemoteActionWidget(
+                  enter: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>CategoryPage(sectionName: movieElement.sectionName,)));
+                  },
+                  up: (){
+                    if (movieElement.sectionIndex == 0) {
+                      changeFocus(context, HomeClass.sliderFocusNode);
+                      pageController.animateTo(0,
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.fastOutSlowIn);
+                    } else if (movieElement.sectionIndex  == 1) {
+                      changeFocus(context, secondRowFocus[lastElement]);
+                      pageController.animateTo(500,
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.fastOutSlowIn);
+                    } else if (movieElement.sectionIndex == 2) {
+                      changeFocus(context, HomeClass.movieElements[1].elementsFocus![HomeClass.movieElements[1].lastElement]);
+                      pageController.animateTo(610,
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.fastOutSlowIn);
+
+                    }
+                    else if (movieElement.sectionIndex == 3) {
+                      changeFocus(context, HomeClass.movieElements[2].elementsFocus![HomeClass.movieElements[2].lastElement]);
+                      pageController.animateTo(850,
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.fastOutSlowIn);
+                    }
+                  },
+                  down: (){
+                    changeFocus(context, movieElement.elementsFocus![movieElement.lastElement]);
+                  },
+                  child: Focus(
+                    focusNode: movieElement.categoryFocus,
+                    child: Container(
+                        alignment: Alignment.centerLeft,
+                        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                        child: Text(
+                          movieElement.sectionName.toUpperCase(),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: movieElement.categoryFocus.hasFocus?Colors.yellow:Colors.cyan),
+                        )),
+                  ),
+                ),
                 Container(
                   height: 220,
                   child:
@@ -380,33 +416,10 @@ class _HomePageState extends State<HomePage> {
             MaterialPageRoute(builder: (context) => MoviePlay(film: item)));
       },
       up: () {
-        if (movieElement.sectionIndex == 0) {
-          changeFocus(context, HomeClass.sliderFocusNode);
-          movieElement.lastElement = index;
-          pageController.animateTo(0,
-              duration: Duration(milliseconds: 500),
-              curve: Curves.fastOutSlowIn);
-        } else if (movieElement.sectionIndex  == 1) {
-          changeFocus(context, secondRowFocus[lastElement]);
-          movieElement.lastElement = index;
-          pageController.animateTo(500,
-              duration: Duration(milliseconds: 500),
-              curve: Curves.fastOutSlowIn);
-        } else if (movieElement.sectionIndex == 2) {
-          changeFocus(context, HomeClass.movieElements[1].elementsFocus![HomeClass.movieElements[1].lastElement]);
-          movieElement.lastElement=index;
-          pageController.animateTo(610,
-              duration: Duration(milliseconds: 500),
-              curve: Curves.fastOutSlowIn);
 
-        }
-        else if (movieElement.sectionIndex == 3) {
-          changeFocus(context, HomeClass.movieElements[2].elementsFocus![HomeClass.movieElements[2].lastElement]);
-          movieElement.lastElement=index;
-          pageController.animateTo(850,
-              duration: Duration(milliseconds: 500),
-              curve: Curves.fastOutSlowIn);
-        }
+         movieElement.lastElement = index;
+         changeFocus(context, movieElement.categoryFocus);
+
       },
       right: () {
         if (movieElement.elementsFocus != null && (movieElement.elementsFocus!.length - 1) != index) {
@@ -434,13 +447,13 @@ class _HomePageState extends State<HomePage> {
               curve: Curves.fastOutSlowIn);
         }
         else if (movieElement.sectionIndex == 1) {
-          changeFocus(context, HomeClass.movieElements[2].elementsFocus![HomeClass.movieElements[2].lastElement]);
+          changeFocus(context,HomeClass.movieElements[2].categoryFocus);
           movieElement.lastElement = index;
           pageController.animateTo(850,
               duration: Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
         }else if(movieElement.sectionIndex==2){
-          changeFocus(context, HomeClass.movieElements[3].elementsFocus![HomeClass.movieElements[3].lastElement]);
+          changeFocus(context, HomeClass.movieElements[3].categoryFocus);
           movieElement.lastElement = index;
           pageController.animateTo(1100,
               duration: Duration(milliseconds: 500),

@@ -20,6 +20,7 @@ class MySlider extends StatefulWidget {
 class _MySliderState extends State<MySlider> {
   @override
   Widget build(BuildContext context) {
+    print("slideBuild");
     return ClickRemoteActionWidget(
       enter: () {
         if ((HomeClass.sliderFocusNode.hasFocus)) {
@@ -53,8 +54,8 @@ class _MySliderState extends State<MySlider> {
           widget.pageController.animateTo(270,
               duration: const Duration(milliseconds: 500),
               curve: Curves.fastOutSlowIn);
-          FocusScope.of(widget.mainContext).requestFocus(HomeClass.movieElements[0].elementsFocus![HomeClass.movieElements[0].lastElement]);
-          widget.setStateFunction();
+           FocusScope.of(widget.mainContext).requestFocus(HomeClass.movieElements[0].categoryFocus);
+           widget.setStateFunction();
 
         }
       },

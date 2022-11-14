@@ -4,9 +4,71 @@ import 'package:new_ucon/utils/actionHandler.dart';
 
 import 'model/film.dart';
 import 'model/movie_element.dart';
+import 'model/producer.dart';
 
 String myServer = "https://ucontv.com.kg/";
 String rezkaServer="https://rezka.ag/";
+class ProducerClass{
+  String sectionName;
+  ProducerClass(this.sectionName);
+  List<Producer> cartoonProducers(){
+    return [disney(),netflix(),newbie(),others()];
+  }
+  List<Producer> movieProducers(){
+    return [disney(),amazon(),appleTV(),netflix(),hbo(),newbie(),others()];
+  }
+  List<Producer> categories(){
+    return [categoryFamily(),categoryHorror(),categoryAction(),categoryComedy(),categoryDocumentary(),categoryThriller(),categoryAdventure(),categoryDetective()];
+  }
+
+  Producer categoryDocumentary(){
+    return Producer(name:"Документальные",imageName: "",link: sectionName=="Фильмы"?"films/documentary":(sectionName=="Сериалы"?"series/documentary":"cartoons/documentary"));
+  }
+  Producer categoryAction(){
+    return Producer(name:"Боевики",imageName: "",link: sectionName=="Фильмы"?"films/action":(sectionName=="Сериалы"?"series/action":"cartoons/action"));
+  }
+  Producer categoryHorror(){
+    return Producer(name:"Ужасы",imageName: "",link: sectionName=="Фильмы"?"films/horror":(sectionName=="Сериалы"?"series/horror":"cartoons/horror"));
+  }
+  Producer categoryThriller(){
+    return Producer(name:"Триллеры",imageName: "",link: sectionName=="Фильмы"?"films/thriller":(sectionName=="Сериалы"?"series/thriller":"cartoons/thriller"));
+  }
+  Producer categoryAdventure(){
+    return Producer(name:"Приключения",imageName: "",link: sectionName=="Фильмы"?"films/adventures":(sectionName=="Сериалы"?"series/adventures":"cartoons/adventures"));
+  }
+  Producer categoryFamily(){
+    return Producer(name:"Семейные",imageName: "",link: sectionName=="Фильмы"?"films/family":(sectionName=="Сериалы"?"series/family":"cartoons/family"));
+  }
+  Producer categoryDetective(){
+    return Producer(name:"Детективы",imageName: "",link: sectionName=="Фильмы"?"films/detective":(sectionName=="Сериалы"?"series/detective":"cartoons/detective"));
+  }
+  Producer categoryComedy(){
+    return Producer(name:"Комедии",imageName: "",link: sectionName=="Фильмы"?"films/comedy":(sectionName=="Сериалы"?"series/comedy":"cartoons/comedy"));
+  }
+  Producer appleTV(){
+    return Producer(name:"Apple TV",imageName: "apple_tv",link: sectionName=="Фильмы"?"collections/1416-filmy-apple-tv":"collections/1146-serialy-apple-tv");
+  }
+  Producer amazon(){
+    return Producer(name:"Амазон",imageName: "amazon",link: sectionName=="Фильмы"?"collections/1417-filmy-amazon":"collections/831-serialy-amazon");
+  }
+  Producer hbo(){
+    return Producer(name:"HBO",imageName: "hbo",link: sectionName=="Фильмы"?"collections/1419-filmy-hbo":"collections/639-serialy-hbo");
+  }
+  Producer disney(){
+    return Producer(name:"Дисней",imageName: "disney", link: sectionName=="Фильмы"?"collections/1075-filmy-disney":(sectionName=="Сериалы"?"1148-serialy-disney":"collections/1-multfilmy-disney"));
+  }
+  Producer netflix(){
+    return Producer(name:"Нетфликс",imageName: "netflix", link: sectionName=="Фильмы"?"collections/834-filmy-netflix":(sectionName=="Сериалы"?"collections/640-serialy-netflix":"cfollections/1004-animacionnye-serialy-netflix"));
+  }
+  Producer newbie(){
+    return Producer(name:"Новинки",imageName: "newbie", link: sectionName=="Фильмы"?"films/best/2022":(sectionName=="Сериалы"?"series/best/2022":"cartoons/best/2022"));
+  }
+
+  Producer others(){
+    return Producer(name:"Другие",imageName: "others", link: sectionName=="Фильмы"?"films":(sectionName=="Сериалы"?"series":"cartoons"));
+  }
+
+}
 String support =
     "Не нашли нужный телеканал?\nУ вас есть пожелания?\nВозникли трудности с приложением?\nНапишите нам";
 String policy =

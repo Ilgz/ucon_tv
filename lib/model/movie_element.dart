@@ -10,6 +10,7 @@ class MovieElement {
   String sectionName;
   List<Film> elements=[];
   List<FocusNode>? elementsFocus;
+  FocusNode categoryFocus=FocusNode();
   int lastElement=0;
   int sectionIndex;
   ScrollController scrollController=ScrollController();

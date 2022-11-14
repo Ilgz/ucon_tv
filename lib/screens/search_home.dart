@@ -1,10 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_ucon/constants.dart';
 import 'package:new_ucon/utils/actionHandler.dart';
-
 import '../home/home_bloc.dart';
 import '../model/film.dart';
 import 'movie_play.dart';

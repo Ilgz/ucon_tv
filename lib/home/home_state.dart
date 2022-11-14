@@ -3,6 +3,14 @@ part of 'home_bloc.dart';
 abstract class HomeState {}
 
 class HomeInitial extends HomeState {}
+class UpdateCategoryMovieLoading extends HomeState {
+}
+class UpdateCategoryMovieSuccess extends HomeState {
+  List<Film> movieList;
+  int page;
+  UpdateCategoryMovieSuccess(this.movieList,this.page);
+
+}
 class UpdateMovieSuccess extends HomeState {
   List<Film> movieList;
   String category;
