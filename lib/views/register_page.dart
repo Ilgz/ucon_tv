@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:new_ucon/blocs/register/register_bloc.dart';
 import 'package:new_ucon/views/register_otp_page.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:date_format/date_format.dart';
 import '../utils/actionHandler.dart';
 
 class RegScreen extends StatefulWidget {
@@ -11,22 +14,22 @@ class RegScreen extends StatefulWidget {
 }
 
 class _RegScreenState extends State<RegScreen> {
-  List<FocusNode>? list;
+  List<FocusNode> list=List.generate(11, (index) => FocusNode());
   String phoneNumber = "+996  ";
-  String billNumber = "";
   List<String> digitList = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
   FocusNode submitButtonFocusNode = FocusNode();
   FocusNode vps3ButtonFocusNode = FocusNode();
-  late FocusNode changeModeButtonFocusNode;
-  int mode = 0;
-
+  bool isFirst=true;
   @override
   Widget build(BuildContext context) {
-    if (list == null) {
-      list = List.generate(11, (index) => FocusNode());
-      changeModeButtonFocusNode = FocusNode();
-      FocusScope.of(context).requestFocus(list![0]);
-      // FocusScope.of(context).requestFocus(submitButtonFocusNode);
+    if (isFirst) {
+      print(DateTime(2022, 12+1, 0).day);
+      //print();
+    //  BlocProvider.of<RegisterBloc>(context).add(LoginUser("phoneNumber", 2));
+     // String day=formatDate(DateTime.now().toUtc().day,[dd]);
+    //  print(.day);
+      FocusScope.of(context).requestFocus(list[0]);
+      isFirst=false;
     }
     return Container(
       decoration: BoxDecoration(
@@ -38,7 +41,7 @@ class _RegScreenState extends State<RegScreen> {
           backgroundColor: Colors.transparent,
           body: HandleRemoteActionsWidget(
             child: Container(
-              margin: const EdgeInsets.only(right: 100, bottom: 100),
+              margin: const EdgeInsets.only(right: 200, bottom: 100),
               alignment: Alignment.bottomRight,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 50),
@@ -59,9 +62,8 @@ class _RegScreenState extends State<RegScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 30.0),
                       child: Text(
-                          mode == 0
-                              ? "Введите номер мобильного телефона"
-                              : "Введите номер лицевого счета",
+                    "Введите номер мобильного телефона"
+                              ,
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w400)),
                     ),
@@ -70,12 +72,12 @@ class _RegScreenState extends State<RegScreen> {
                           color: Colors.white70,
                           borderRadius: BorderRadius.circular(5)),
                       width: _textSize(
-                              mode == 0 ? "+996  709 872 197" : "228 777",
+                              "+996  709 872 197",
                               const TextStyle(fontSize: 24)) +
                           40,
                       padding:
                           const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                      child: Text(mode == 0 ? phoneNumber : billNumber,
+                      child: Text(phoneNumber,
                           style: const TextStyle(fontSize: 24)),
                     ),
                     const SizedBox(
@@ -85,7 +87,7 @@ class _RegScreenState extends State<RegScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          for (int i = 0; i < list!.length; i++) ...[
+                          for (int i = 0; i < list.length; i++) ...[
                             digitWidget(i),
                           ],
                           // digitWidget(0)
@@ -95,45 +97,17 @@ class _RegScreenState extends State<RegScreen> {
                       children: [
                         ClickRemoteActionWidget(
                           enter: () {
-                            mode = mode == 0 ? 1 : 0;
-                            setState(() {});
-                          },
-                          right: () {
-                            _changeFocus(context, vps3ButtonFocusNode);
-                          },
-                          up: () {
-                            _changeFocus(context, list![4]);
-                          },
-                          child: Focus(
-                            focusNode: changeModeButtonFocusNode,
-                            child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                    primary: Colors.white,
-                                    onPrimary:
-                                        changeModeButtonFocusNode.hasFocus
-                                            ? Colors.yellow
-                                            : Colors.black87),
-                                onPressed: () {},
-                                child:
-                                    Text((" " * 10) + "Сменить" + (" " * 10))),
-                          ),
-                        ),
-                        SizedBox(width:10),
-                        ClickRemoteActionWidget(
-                          enter: () {
+
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => RegOtp(isThird: true,)));
+                                    builder: (context) => RegOtp()));
                           },
                           right: () {
                             _changeFocus(context, submitButtonFocusNode);
                           },
-                          left: (){
-                            _changeFocus(context, changeModeButtonFocusNode);
-                          },
                           up: () {
-                            _changeFocus(context, list![4]);
+                            _changeFocus(context, list[4]);
                           },
                           child: Focus(
                             focusNode: vps3ButtonFocusNode,
@@ -146,43 +120,31 @@ class _RegScreenState extends State<RegScreen> {
                                         : Colors.black87),
                                 onPressed: () {},
                                 child:
-                                Text((" " * 10) + "VPS 3" + (" " * 10))),
+                                Text((" " * 10) + "VPS 2/3" + (" " * 8))),
                           ),
                         ),
                         SizedBox(width:10),
                         ClickRemoteActionWidget(
-                          enter: () {
-                            if (mode == 0) {
+                          enter: () async{
                               if (phoneNumber.length == 17) {
+                                print("phone");
+                                print(phoneNumber.replaceAll("+", "").replaceAll(" ", ""));
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => RegOtp()));
+                                        builder: (context) => RegOtp(phoneNumber:phoneNumber.replaceAll("+", "").replaceAll(" ", ""))));
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content:
                                             Text("Заполните поле полностью")));
                               }
-                            } else {
-                              if (phoneNumber.length == 7) {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>  RegOtp()));
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text("Заполните поле полностью")));
-                              }
-                            }
                           },
                           left: () {
                             _changeFocus(context, vps3ButtonFocusNode);
                           },
                           up: () {
-                            _changeFocus(context, list![4]);
+                            _changeFocus(context, list[4]);
                           },
                           child: Focus(
                             focusNode: submitButtonFocusNode,
@@ -193,7 +155,7 @@ class _RegScreenState extends State<RegScreen> {
                                         ? Colors.yellow
                                         : Colors.black87),
                                 onPressed: () {},
-                                child: Text((" " * 11) + "Далее" + (" " * 11))),
+                                child: Text("${" " * 11}Далее${" " * 11}")),
                           ),
                         ),
                       ],
@@ -219,24 +181,23 @@ class _RegScreenState extends State<RegScreen> {
         nine: () => _addDigit("9"),
         zero: () => _addDigit("0"),
         down: () {
-          _changeFocus(context, changeModeButtonFocusNode);
+          _changeFocus(context, vps3ButtonFocusNode);
         },
         right: () {
-          if (index + 2 > list!.length) {
-            _changeFocus(context, list![0]);
+          if (index + 2 > list.length) {
+            _changeFocus(context, list[0]);
           } else {
-            _changeFocus(context, list![index + 1]);
+            _changeFocus(context, list[index + 1]);
           }
         },
         left: () {
           if (index == 0) {
-            _changeFocus(context, list![list!.length - 1]);
+            _changeFocus(context, list[list.length - 1]);
           } else {
-            _changeFocus(context, list![index - 1]);
+            _changeFocus(context, list[index - 1]);
           }
         },
         enter: () {
-          if (mode == 0) {
             if (index == 10) {
               if (phoneNumber.length > 6) {
                 setState(() {
@@ -261,61 +222,36 @@ class _RegScreenState extends State<RegScreen> {
                 }
               });
             }
-          } else {
-            if (index == 10) {
-              if (billNumber.length >= 1) {
-                setState(() {
-                  billNumber = billNumber.substring(0, billNumber.length - 1);
-                  if (billNumber.length != 0) {
-                    if (billNumber[billNumber.length - 1] == " ") {
-                      billNumber =
-                          billNumber.substring(0, billNumber.length - 1);
-                    }
-                  }
-                });
-              }
-            } else {
-              setState(() {
-                if (billNumber.length < 7) {
-                  if (billNumber.length == 3) {
-                    billNumber += " ${digitList[index]}";
-                  } else {
-                    billNumber += digitList[index];
-                  }
-                }
-              });
-            }
-          }
+
         },
         child: index == 10
             ? Focus(
-                focusNode: list![index],
+                focusNode: list[index],
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   child: Icon(
                     Icons.backspace_outlined,
-                    color: list![index].hasFocus
+                    color: list[index].hasFocus
                         ? Colors.yellow.shade200
                         : Colors.black87,
                   ),
                 ))
             : Focus(
-                focusNode: list![index],
+                focusNode: list[index],
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   child: Text(
                     digitList[index],
                     style: TextStyle(
-                        color: list![index].hasFocus
+                        color: list[index].hasFocus
                             ? Colors.yellow.shade200
                             : Colors.black87,
-                        fontSize: 20),
+                        fontSize: 24),
                   ),
                 )));
   }
 
   _addDigit(String digit) {
-    if (mode == 0) {
       setState(() {
         if (phoneNumber.length < 17) {
           if (phoneNumber.length == 9 || phoneNumber.length == 13) {
@@ -325,17 +261,7 @@ class _RegScreenState extends State<RegScreen> {
           }
         }
       });
-    } else {
-      setState(() {
-        if (billNumber.length < 7) {
-          if (billNumber.length == 3) {
-            billNumber += " " + digit;
-          } else {
-            billNumber += digit;
-          }
-        }
-      });
-    }
+
   }
 
   _changeFocus(BuildContext context, FocusNode node) {

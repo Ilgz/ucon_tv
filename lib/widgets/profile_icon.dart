@@ -8,9 +8,7 @@ import '../utils/actionHandler.dart';
 class ProfileIcon extends StatelessWidget {
   static final   FocusNode profileFocus = FocusNode();
   static bool willRequest=true;
-
   ProfileIcon({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return ClickRemoteActionWidget(

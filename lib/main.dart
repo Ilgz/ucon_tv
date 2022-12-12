@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_ucon/blocs/category/category_bloc.dart';
 import 'package:new_ucon/blocs/channel/channel_bloc.dart';
+import 'package:new_ucon/blocs/register/register_bloc.dart';
 import 'package:new_ucon/views/channel_play_page.dart';
 import 'package:new_ucon/views/home_page.dart';
 import 'package:new_ucon/views/register_page.dart';
-
 import 'blocs/home/home_bloc.dart';
 import 'blocs/movie/movie_bloc.dart';
 class MyHttpOverrides extends HttpOverrides{
@@ -28,6 +28,9 @@ void main() {
       ),
       BlocProvider<CategoryBloc>(
         create: (context) => CategoryBloc(),
+      ),
+      BlocProvider<RegisterBloc>(
+        create: (context) => RegisterBloc(),
       ),
       BlocProvider<ChannelBloc>(
         create: (context) => ChannelBloc(),

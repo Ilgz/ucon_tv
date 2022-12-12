@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_ucon/data/constants.dart';
+import 'package:new_ucon/views/home_page.dart';
+import 'package:new_ucon/widgets/dialogs/access_alert_dialog.dart';
 
 import '../blocs/home/home_bloc.dart';
 import '../models/film_model.dart';
@@ -23,8 +25,13 @@ class MovieItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClickRemoteActionWidget(
       enter: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => MoviePlay(film: item)));
+        if(UserAccount.hasAccess){
+         Navigator.push(context, MaterialPageRoute(builder: (context)=>MoviePlay(film: item)));
+        }else{
+        showDialog(context: context,builder: (_)=>AccessAlert());
+        }
+        // Navigator.push(context,
+        //     MaterialPageRoute(builder: (context) => MoviePlay(film: item)));
       },
       up: () {
         movieElement.lastElement = index;
@@ -65,7 +72,7 @@ class MovieItem extends StatelessWidget {
       down: () {
         if (movieElement.sectionIndex == 0) {
           movieElement.lastElement = index;
-          BlocProvider.of<HomeBloc>(context).add(ActionMovieOneRowOneEvent());
+          BlocProvider.of<HomeBloc>(context).add(ActionMovieOneRecommendationsEvent());
           HomeClass.pageController.animateTo(500,
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.fastOutSlowIn);

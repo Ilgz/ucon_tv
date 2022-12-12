@@ -2,6 +2,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_ucon/data/constants.dart';
+import 'package:new_ucon/widgets/dialogs/access_alert_dialog.dart';
 
 import '../blocs/home/home_bloc.dart';
 import '../models/film_model.dart';
@@ -11,13 +12,13 @@ import '../utils/actionHandler.dart';
 class MySlider extends StatelessWidget {
   static CarouselController carouselController=CarouselController();
   static bool willRequest=false;
-  MySlider({Key? key})
+  FocusNode focusNode;
+  MySlider({Key? key,required this.focusNode})
       : super(key: key);
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<HomeBloc, HomeState>(
       listener: (context,state){
-
         if(state is LoadHomeDataSuccessState){
           HomeClass.sliderList.addAll(state.sliderList);
         }
@@ -25,7 +26,7 @@ class MySlider extends StatelessWidget {
           if(!willRequest){
             willRequest=true;
           }else{
-            FocusScope.of(context).requestFocus(HomeClass.sliderFocus);willRequest=false;
+            FocusScope.of(context).requestFocus(focusNode);willRequest=false;
           }
         }
       },
@@ -51,21 +52,26 @@ class MySlider extends StatelessWidget {
   ClickRemoteActionWidget _buildSlider(BuildContext context) {
     return ClickRemoteActionWidget(
           enter: () {
-            if ((HomeClass.sliderFocus.hasFocus)) {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          MoviePlay(
-                              film: Film(
-                                  name: HomeClass.sliderList[HomeClass
-                                      .activeIndex]
-                                      .name,
-                                  imageLink: HomeClass.sliderList[HomeClass.activeIndex]
-                                      .image,
-                                  siteLink: HomeClass.sliderList[HomeClass
-                                      .activeIndex]
-                                      .site,details: ""))));
+            if ((focusNode.hasFocus)) {
+              if(UserAccount.hasAccess){
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            MoviePlay(
+                                film: Film(
+                                    name: HomeClass.sliderList[HomeClass
+                                        .activeIndex]
+                                        .name,
+                                    imageLink: HomeClass.sliderList[HomeClass.activeIndex]
+                                        .image,
+                                    siteLink: HomeClass.sliderList[HomeClass
+                                        .activeIndex]
+                                        .site,details: ""))));
+              }else{
+                showDialog(context: context,builder: (_)=>AccessAlert());
+              }
+
             }
           },
           up: () {
@@ -88,61 +94,61 @@ class MySlider extends StatelessWidget {
                 curve: Curves.fastOutSlowIn);
           },
           child: Focus(
-            focusNode: HomeClass.sliderFocus,
-            child: Container(
-              child: CarouselSlider.builder(
-                carouselController: carouselController,
-                options: CarouselOptions(
-                  height: 250,
-                  viewportFraction: 0.4,
-                  enableInfiniteScroll: true,
-                  onPageChanged: (index, reason) {
-                    HomeClass.activeIndex = index;
-                    BlocProvider.of<HomeBloc>(context).add(ActionSliderRebuildEvent());
-                  },
-                ),
-                itemCount: HomeClass.sliderList.length,
-                itemBuilder: (context, index, realIndex) {
-                  final urlImage = HomeClass.sliderList[index].sliderImage;
-                  return Container(
-                    decoration: BoxDecoration(
-                        border: (index == HomeClass.activeIndex &&
-                            HomeClass.sliderFocus.hasFocus)
-                            ? Border.all(color: Colors.yellow, width: 2)
-                            : Border.all(color: Colors.transparent, width: 2)),
-                    child: Stack(
-                      children: [
-                        Image.network(
-                          urlImage,
-                          width: 500,
-                          fit: BoxFit.fill,
-                        ),
-                        Positioned(
-                            bottom: 0,
-                            right: 0,
-                            left: 0,
-                            child: Container(
-                                decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.transparent,
-                                        Colors.black,
-                                      ],
-                                    )),
-                                child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Text(
-                                      HomeClass.sliderList[index].name,
-                                      style: TextStyle(
-                                          fontSize: 18, color: Colors.white.withOpacity(1)),
-                                    ))))
-                      ],
-                    ),
-                  );
+            focusNode: focusNode,
+            child: CarouselSlider.builder(
+              carouselController: carouselController,
+              options: CarouselOptions(
+                height: 250,
+                viewportFraction: 0.4,
+                autoPlay: true,
+                autoPlayInterval: Duration(seconds: 15),
+                enableInfiniteScroll: true,
+                onPageChanged: (index, reason) {
+                  HomeClass.activeIndex = index;
+                  BlocProvider.of<HomeBloc>(context).add(ActionSliderRebuildEvent());
                 },
               ),
+              itemCount: HomeClass.sliderList.length,
+              itemBuilder: (context, index, realIndex) {
+                final urlImage = HomeClass.sliderList[index].sliderImage;
+                return Container(
+                  decoration: BoxDecoration(
+                      border: (index == HomeClass.activeIndex &&
+                          focusNode.hasFocus)
+                          ? Border.all(color: Colors.yellow, width: 2)
+                          : Border.all(color: Colors.transparent, width: 2)),
+                  child: Stack(
+                    children: [
+                      Image.network(
+                        urlImage,
+                        width: 500,
+                        fit: BoxFit.fill,
+                      ),
+                      Positioned(
+                          bottom: 0,
+                          right: 0,
+                          left: 0,
+                          child: Container(
+                              decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black,
+                                    ],
+                                  )),
+                              child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Text(
+                                    HomeClass.sliderList[index].name,
+                                    style: TextStyle(
+                                        fontSize: 18, color: Colors.white.withOpacity(1)),
+                                  ))))
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         );

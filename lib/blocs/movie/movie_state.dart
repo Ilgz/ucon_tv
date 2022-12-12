@@ -12,7 +12,8 @@ class LoadFilmLinkSuccessState extends MovieState{
   List<int>? episodes;
   String translatorId;
   String movieId;
-  LoadFilmLinkSuccessState({this.filmLink="",this.episodes,required this.movieId,required this.translatorId});
+  String description;
+  LoadFilmLinkSuccessState({this.filmLink="",this.episodes,required this.movieId,required this.translatorId,required this.description});
   @override
   List<Object> get props => [filmLink, episodes != null];
 }
@@ -34,4 +35,10 @@ class SeekBarUpdateState extends MovieState{
   SeekBarUpdateState(this.length,this.currentPosition,this.textCurrent,this.textLength);
   @override
   List<Object> get props=>[length,currentPosition,textLength,textCurrent];
+}
+class VideoIsPausedState extends MovieState{
+  bool isPaused;
+  VideoIsPausedState(this.isPaused);
+  @override
+  List<Object> get props=>[isPaused];
 }

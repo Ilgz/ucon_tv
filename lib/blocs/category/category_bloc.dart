@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/dom.dart' as dom;
+import 'package:new_ucon/data/constants.dart';
 import 'package:new_ucon/models/film_model.dart';
 part 'category_event.dart';
 part 'category_state.dart';
@@ -36,12 +38,22 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     }
     var client = http.Client();
     try{
-      final movieList=await getMovies(client, category,event.page);
-      emit(UpdateCategoryMovieSuccess(movieList,event.page));
+      if(category=="reco"){
+         final movieList=await getRecommendation(client);
+         emit(UpdateCategoryMovieSuccess(movieList, event.page));
+      }else{
+        final movieList=await getMovies(client, category,event.page);
+        emit(UpdateCategoryMovieSuccess(movieList,event.page));
+      }
+
     } finally {
       client.close();
     }
 
+  }
+  Future<List<Film>> getRecommendation(http.Client client)async {
+    final response=await client.get(Uri.parse(HomeClass.recommendationLink));
+    return filmFromJson(utf8.decode(response.bodyBytes));
   }
   Future<List<Film>> getMovies(http.Client client,String category,int page)async{
     List<Film> _finalList = [];

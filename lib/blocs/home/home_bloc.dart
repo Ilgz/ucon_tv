@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:async' show Future;
 import 'dart:convert';
 
+import 'package:date_format/date_format.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
@@ -13,6 +15,7 @@ import 'package:new_ucon/models/slider_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/film_model.dart';
+import '../../models/user_data_model.dart';
 
 
 part 'home_event.dart';
@@ -41,6 +44,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<CheckRegistrationEvent>((event,emit)async{
       final prefs = await SharedPreferences.getInstance();
       final int? server = prefs.getInt('server');
+      UserAccount.isVlc=prefs.getBool("isVlc")??false;
       await Future.delayed(const Duration(milliseconds: 2000), () {
         emit(CheckRegistrationState(server));
       });
@@ -75,8 +79,52 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<SearchActionMovieLeftEvent>((event,emit)=>emit(SearchActionMovieLeftState(event.index)));
     on<SearchActionMovieUpEvent>((event,emit)=>emit(SearchActionMovieUpState(event.index)));
     on<SearchActionMovieDownEvent>((event,emit)=>emit(SearchActionMovieDownState(event.index)));
+    on<ActionMovieOneRecommendationsEvent>((event,emit)=>emit(ActionMovieOneRecommendationsState()));
+    on<ActionRowOneRecommendationsEvent>((event,emit)=>emit(ActionRowOneRecommendationsState()));
+    on<ActionCategoryTwoRecommendationsEvent>((event,emit)=>emit(ActionCategoryTwoRecommendationsState()));
+    on<ActionRowTwoRecommendationsEvent>((event,emit)=>emit(ActionRowTwoRecommendationsState()));
+    on<HomeResetStateEvent>((event,emit)=>emit(HomeInitial()));
+    on<CheckAccessEvent>(checkAccess);
+
   }
 
+  Future<void> checkAccess(CheckAccessEvent event,Emitter<HomeState> emit)async{
+    final prefs = await SharedPreferences.getInstance();
+    UserData userData=await getUserData(prefs.getString("phoneNumber")!);
+    UserAccount.hasAccess=await checkPayStatus(userData);
+    UserAccount.balance=userData.balance;
+    UserAccount.phoneNumber=userData.phoneNumber;
+    UserAccount.server=prefs.getInt("server")!;
+    emit(CheckAccessState());
+
+  }
+  Future<UserData> getUserData(String phoneNumber)async{
+    final response= await http.get(Uri.parse("https://ucontv.com.kg/abon/?command=get_balance&phone_number=$phoneNumber"));
+      return userDataFromJson(response.body)[0];
+
+  }
+  Future<bool> checkPayStatus(UserData userData)async{
+    String month=formatDate(DateTime.now().toUtc(),[mm]);
+    if(userData.payedMonth==month){
+      return true;
+    }
+    else{
+      late double remnant;
+      int leftDays=31-int.parse(formatDate(DateTime.now().toUtc(),[dd]));
+      if (formatDate(DateTime.now().toUtc(),[dd])=="01") {
+        remnant = 300;
+      } else {
+        remnant = leftDays * 10;
+      }
+      int leftBalance=int.parse(userData.balance)-remnant.round();
+      if(leftBalance>=0){
+        http.get(Uri.parse("https://ucontv.com.kg/abon/?command=set_balance&phone_number=${userData.phoneNumber}&sum=${leftBalance.toString()}&payed_month=$month"));
+        return true;
+      }else {
+        return false;
+      }
+    }
+  }
   Future<void> _searchMovieEvent(SearchMovieEvent event,Emitter<HomeState> emit)async{
     List<Film> _finalList = [];
     emit(SearchMovieLoadingState());
@@ -131,21 +179,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   } finally {
   client.close();
   }
-
   }
   Future<void> _loadHomeDataEvent(
       LoadHomeDataEvent event, Emitter<HomeState> emit) async {
-    String requestSlidersUrl = "${myServer}Updating/Slider/";
     var client = http.Client();
     try {
-      final responseSlider = await client.get(Uri.parse(requestSlidersUrl),);
-      final resultSlider = sliderFromJson(responseSlider.body);
+      final resultSlider = await _getSlider(client);
       final filmList=await getMovies(client, "films",1);
       final serialList = await getMovies(client, "series", 1);
       final cartoonList = await getMovies(client, "cartoons", 1);
       final premierList = await getMovies(client, "premiers", 1);
      await _getChannelLinks(client);
-      emit(LoadHomeDataSuccessState(
+        emit(LoadHomeDataSuccessState(
           resultSlider,
           filmList,
           cartoonList,
@@ -157,20 +202,62 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       client.close();
     }
   }
-  Future<void> _getChannelLinks(http.Client client) async {
-    final  response=await client.get(Uri.parse("https://ucontv.com.kg/info/update_links/"));
+  Future<List<SliderModel>> _getSlider(http.Client client) async{
+    String link="https://ucontv.com.kg/info/update_links/";
+    final  response=await client.get(Uri.parse(link));
     List<ChannelCategory> channels=channelCategoryFromJson(response.body);
-    //var channelClient = http.Client();
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'PostmanRuntime/7.28.4'
-    };
+    for (var item in channels){
+    if(item.name=="SliderUpdate"){
+      final  response=await client.get(Uri.parse(item.link));
+      return sliderFromJson(utf8.decode(response.bodyBytes));
+    }
+    }
+    return [];
+  }
+
+  Future<void> _getChannelLinks(http.Client client) async {
+    String link="https://ucontv.com.kg/info/update_links/";
+    String endLink=UserAccount.server!=1?link.replaceAll("links/","links_2/"):link;
+    final  response=await client.get(Uri.parse(endLink));
+    List<ChannelCategory> channels=channelCategoryFromJson(response.body);
     for(var item in channels){
       if(item.name=="TCall"){
-
-        final response=await client.get(Uri.parse(item.link),headers: requestHeaders);
+        final response=await client.get(Uri.parse(item.link));
+        Channels.nativeAll=utf8.decode(response.bodyBytes);
         Channels.all=channelFromJson(utf8.decode(response.bodyBytes));
+      }else if(item.name=="TCchild"){
+        final response=await client.get(Uri.parse(item.link));
+        Channels.nativeChild=utf8.decode(response.bodyBytes);
+        Channels.child=channelFromJson(utf8.decode(response.bodyBytes));
+      }else if(item.name=="TCfilm"){
+        final response=await client.get(Uri.parse(item.link));
+        Channels.nativeFilm=utf8.decode(response.bodyBytes);
+        Channels.film=channelFromJson(utf8.decode(response.bodyBytes));
+      }
+      else if(item.name=="TCcog"){
+        final response=await client.get(Uri.parse(item.link));
+        Channels.nativeCog=utf8.decode(response.bodyBytes);
+        Channels.cog=channelFromJson(utf8.decode(response.bodyBytes));
+      }else if(item.name=="TCnews"){
+        final response=await client.get(Uri.parse(item.link));
+        Channels.nativeNews=utf8.decode(response.bodyBytes);
+        Channels.news=channelFromJson(utf8.decode(response.bodyBytes));
+
+      }else if(item.name=="TCsport"){
+        final response=await client.get(Uri.parse(item.link));
+        Channels.nativeSport=utf8.decode(response.bodyBytes);
+        Channels.sport=channelFromJson(utf8.decode(response.bodyBytes));
+      }else if(item.name=="TCmusic"){
+
+        final response=await client.get(Uri.parse(item.link));
+        Channels.nativeMusic=utf8.decode(response.bodyBytes);
+        Channels.music=channelFromJson(utf8.decode(response.bodyBytes));
+      }else if(item.name=="TCinter"){
+        final response=await client.get(Uri.parse(item.link));
+        Channels.nativeInter=utf8.decode(response.bodyBytes);
+        Channels.inter=channelFromJson(utf8.decode(response.bodyBytes));
+      }else if(item.name=="FilmUpdate"){
+        HomeClass.recommendationLink=item.link;
       }
     }
   }

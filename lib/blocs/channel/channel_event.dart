@@ -14,6 +14,7 @@ class ChannelShowLoadingEvent extends ChannelEvent{
   bool show;
   ChannelShowLoadingEvent(this.show);
 }
+
 class ChangeFullscreenMode extends ChannelEvent{
 
 }

@@ -34,7 +34,7 @@ class _SeriesPopupState extends State<SeriesPopup> {
       isFirst=false;
     }
     return Dialog(
-      backgroundColor: Colors.white70,
+      backgroundColor: Colors.lightBlue.shade900,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16.0))),
       child: Padding(
@@ -98,20 +98,18 @@ class _SeriesPopupState extends State<SeriesPopup> {
         child:
         Container(
           decoration: BoxDecoration(border: Border(top: BorderSide())),
-          child: Container(
-            height: 60,
-            child: ListTile(
-                tileColor: (seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.yellow:Colors.white70,
-                leading: CircleAvatar(
-                      backgroundColor: const Color(0xff6ae792),
-                      child: Text(
-                        (index+1).toString(),
-                        style: TextStyle(color: Colors.black),
-                      ),
+          child: ListTile(
+              tileColor: (seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.white:Colors.lightBlue.shade900,
+              leading: CircleAvatar(
+                backgroundColor: Colors.transparent,
+                    child: Text(
+                      (index+1).toString(),
+                        style: TextStyle(color: (seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.black:Colors.white),
                     ),
+                  ),
        // leading:  Icon(Icons.play_arrow_outlined,color: (seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.yellow:Colors.black,),
-            title: Text(seasonIndex!=null?"Серия":"Сезон",textAlign:TextAlign.start,style:TextStyle(color: Colors.black))),
-          ),
+              title: Text(seasonIndex!=null?"Серия":"Сезон",textAlign:TextAlign.start,style:TextStyle(color:(seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.black:Colors.white))),
+
         )
         ,
       ),

@@ -3,7 +3,9 @@ part of 'home_bloc.dart';
 abstract class HomeEvent {}
 class LoadHomeDataEvent extends HomeEvent{}
 class CheckRegistrationEvent extends HomeEvent{}
+class CheckAccessEvent extends HomeEvent{}
 class HomeBackButtonEvent extends HomeEvent{}
+class HomeResetStateEvent extends HomeEvent{}
 class UpdateMovieThreeEvent extends HomeEvent {
   String category;
   UpdateMovieThreeEvent(this.category);
@@ -24,6 +26,10 @@ class ActionSliderCategoryOneEvent extends HomeEvent{}
 class ActionCategoryMovieOneEvent extends HomeEvent{}
 class ActionCategoryTwoMovieTwoEvent extends HomeEvent{}
 class ActionMovieOneRowOneEvent extends HomeEvent{}
+class ActionMovieOneRecommendationsEvent extends HomeEvent{}
+class ActionRowOneRecommendationsEvent extends HomeEvent{}
+class ActionRowTwoRecommendationsEvent extends HomeEvent{}
+class ActionCategoryTwoRecommendationsEvent extends HomeEvent{}
 class ActionMovieTwoCategoryThreeEvent extends HomeEvent{}
 class ActionMovieThreeCategoryThreeEvent extends HomeEvent{}
 class ActionRowOneRowTwoEvent extends HomeEvent{}

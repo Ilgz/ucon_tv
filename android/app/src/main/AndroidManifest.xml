@@ -6,10 +6,14 @@
             android:required="false" />
     <application
         android:name="${applicationName}"
-        android:banner="@mipmap/ic_launcher"
-        android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/banner"
+        android:icon="@drawable/icon"
         android:label="new_ucon"
         android:usesCleartextTraffic="true">
+        <activity android:name=".TeleDetailActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+        <activity android:name=".SecondActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"

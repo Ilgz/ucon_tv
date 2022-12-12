@@ -43,7 +43,7 @@ class ListViewMovie extends StatelessWidget {
             }
             else if (movieElement.sectionIndex == 1) {
 
-              BlocProvider.of<HomeBloc>(context).add(ActionRowTwoCategoryTwoEvent());
+              BlocProvider.of<HomeBloc>(context).add(ActionCategoryTwoRecommendationsEvent());
               HomeClass.pageController.animateTo(500,
                   duration: const Duration(milliseconds: 500),
                   curve: Curves.fastOutSlowIn);
@@ -79,7 +79,7 @@ class ListViewMovie extends StatelessWidget {
                     }
                   }
                 }else if(movieElement.sectionIndex==1){
-                  if(state is ActionRowTwoCategoryTwoState||state is ActionCategoryTwoMovieTwoState){
+                  if(state is ActionRowTwoCategoryTwoState||state is ActionCategoryTwoMovieTwoState||state is ActionCategoryTwoRecommendationsState){
                     if (!categoryTwoWillRequest) {
                       categoryTwoWillRequest = true;
                     } else {
@@ -111,7 +111,7 @@ class ListViewMovie extends StatelessWidget {
         return false;
       }
     }else if(movieElement.sectionIndex==1){
-      if(state is ActionRowTwoCategoryTwoState||state is ActionCategoryTwoMovieTwoState){
+      if(state is ActionRowTwoCategoryTwoState||state is ActionCategoryTwoMovieTwoState||state is ActionMovieOneRecommendationsState){
         return true;
       }else{
         return false;
@@ -190,7 +190,7 @@ class ListViewMovie extends StatelessWidget {
               return BlocConsumer<HomeBloc, HomeState>(
                 listener: (context, state) {
                   if(movieElement.sectionIndex==0){
-                  if (state is ActionCategoryMovieOneState||state is ActionMovieOneRowOneState) {
+                  if (state is ActionCategoryMovieOneState||state is ActionMovieOneRowOneState||state is ActionMovieOneRecommendationsState) {
                     if(index==movieElement.lastElement){
                       movieOneWillRequest=requestOrRebuildListener(context, movieOneWillRequest, index);
                     }
@@ -228,7 +228,7 @@ class ListViewMovie extends StatelessWidget {
                 buildWhen: (context,state) {
                   if (movieElement.sectionIndex == 0) {
                     if (state is ActionCategoryMovieOneState ||
-                        state is ActionMovieOneRowOneState) {
+                        state is ActionMovieOneRowOneState||state is ActionMovieOneRecommendationsState) {
                       return requestOrRebuildBuildWhen(index);
                     }
                     else if (state is ActionMovieOneRightState) {

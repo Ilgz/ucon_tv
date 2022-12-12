@@ -1,11 +1,10 @@
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_vlc_player/flutter_vlc_player.dart';
-import 'package:new_ucon/data/constants.dart';
 import 'package:new_ucon/models/film_model.dart';
 import 'package:new_ucon/utils/actionHandler.dart';
 import 'package:new_ucon/widgets/seekbar.dart';
+import 'package:video_player/video_player.dart';
 
 import '../blocs/movie/movie_bloc.dart';
 import '../widgets/dialogs/series_dialog.dart';
@@ -20,37 +19,45 @@ class MoviePlay extends StatefulWidget {
 }
 
 class _MoviePlayState extends State<MoviePlay> {
-  VlcPlayerController? _videoPlayerController;
+  VideoPlayerController? _controller;
   List<int>? episodes;
   late String movieId;
   late String translatorId;
   bool controllerVisibility = true;
-  bool isFirst = true;
   late Function activateController;
   bool isFullscreen = false;
-  RestartableTimer? _timer;
+  late RestartableTimer _timer;
+
   @override
   void initState() {
     super.initState();
-    MoviePlayClass.seekBarFocus=FocusNode();
     BlocProvider.of<MovieBloc>(context)
         .add(LoadFilmLinkEvent(widget.film.siteLink, widget.film.name));
+    _timer = RestartableTimer(const Duration(seconds: 15), () {
+      controllerVisibility = false;
+      if (mounted) {
+        setState(() {});
+      }
+    });
+    activateController = () {
+      _timer.reset();
+      if (!controllerVisibility) {
+        controllerVisibility = true;
+        setState(() {});
+      }
+    };
   }
 
   @override
-  void dispose() async {
+  void dispose() {
     super.dispose();
-    await _videoPlayerController?.stopRendererScanning();
-    _videoPlayerController = null;
-    _timer?.cancel();
+    _controller?.dispose();
+    _controller = null;
+    _timer.cancel();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isFirst == true) {
-      isFirst = false;
-      FocusScope.of(context).requestFocus(MoviePlayClass.seekBarFocus);
-    }
     return WillPopScope(
       onWillPop: () async {
         if (isFullscreen) {
@@ -95,9 +102,9 @@ class _MoviePlayState extends State<MoviePlay> {
                       color: Colors.black,
                       child: Image.network(
                         widget.film.imageLink,
-                        height: 280,
+                        height: 350,
                         fit: BoxFit.fill,
-                        width: 192,
+                        width: 240,
                       )),
                   const SizedBox(
                     height: 10,
@@ -106,15 +113,36 @@ class _MoviePlayState extends State<MoviePlay> {
                     widget.film.name,
                     style: const TextStyle(color: Colors.yellow, fontSize: 18),
                   ),
-                  if(widget.film.details.split(",").length==3)...[
-                    const SizedBox(height: 5,),
-                    Text("Дата выхода: " + widget.film.details.split(",")[0],style: const TextStyle(color: Colors.yellow, fontSize: 16)),
-                    const SizedBox(height: 5,),
-                    Text("Страна: " + widget.film.details.split(",")[1],style: const TextStyle(color: Colors.yellow, fontSize: 16)),
-                    const SizedBox(height: 5,),
-                    Text("Жанр: " + widget.film.details.split(",")[2],style: const TextStyle(color: Colors.yellow, fontSize: 16)),
+                  if (widget.film.details.split(",").length == 3) ...[
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    Text("Дата выхода: ${widget.film.details.split(",")[0]}",
+                        style: const TextStyle(
+                            color: Colors.yellow, fontSize: 16)),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    Text("Страна: ${widget.film.details.split(",")[1]}",
+                        style: const TextStyle(
+                            color: Colors.yellow, fontSize: 16)),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    Text("Жанр: ${widget.film.details.split(",")[2]}",
+                        style: const TextStyle(
+                            color: Colors.yellow, fontSize: 16)),
+    SizedBox(height: 10,),
+    Expanded(
+
+    child: Center(
+      child: Image.asset(
+      "assets/images/movie_control_guide.png",height: 100,width: 100,
+      fit: BoxFit.cover,
+      ),
+    ),)
                   ]
-                 ],
+                ],
               ),
             ),
           ),
@@ -122,11 +150,27 @@ class _MoviePlayState extends State<MoviePlay> {
         Expanded(
           flex: 3,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 height: isFullscreen ? 0 : 20,
               ),
               Expanded(flex: isFullscreen ? 1 : 0, child: buildFullMode()),
+
+              Visibility(visible:isFullscreen?false:true,child: BlocBuilder<MovieBloc, MovieState>(
+                buildWhen: (context,state){
+                  if(state is LoadFilmLinkSuccessState){
+                    return true;
+                  }
+                  return false;
+                },
+  builder: (context, state) {
+    if(state is LoadFilmLinkSuccessState){
+      return Container(margin:EdgeInsets.only(right: 25,top: 10),child: Text(state.description,textAlign:TextAlign.start,style: TextStyle(fontSize: 16,color: Colors.white),));
+    }
+    return SizedBox();
+  },
+))
             ],
           ),
         ),
@@ -137,7 +181,8 @@ class _MoviePlayState extends State<MoviePlay> {
   Widget buildFullMode() {
     return BlocConsumer<MovieBloc, MovieState>(
       buildWhen: (previousState, state) {
-        if (state is LoadFilmLinkSuccessState) {
+        if (state is LoadFilmLinkSuccessState ||
+            state is ChangeSeriesSuccessState) {
           return true;
         } else {
           return false;
@@ -145,138 +190,154 @@ class _MoviePlayState extends State<MoviePlay> {
       },
       listener: (context, state) {
         if (state is ChangeSeriesSuccessState) {
-          _videoPlayerController!.setMediaFromNetwork(state.filmLink);
+          _controller!.dispose();
+          _controller = VideoPlayerController.network(state.filmLink)
+            ..initialize().then((value) {
+              _controller!.play();
+              setState(() {
+              });
+            });
+          BlocProvider.of<MovieBloc>(context).add(VideoIsPaused(false));
         }
         if (state is LoadFilmLinkSuccessState) {
           movieId = state.movieId;
           translatorId = state.translatorId;
           episodes = state.episodes;
+          _controller = VideoPlayerController.network(state.filmLink)
+            ..initialize().then((value) {
+              _controller!.play();
+              setState(() {
 
-          _videoPlayerController = VlcPlayerController.network(
-            state.filmLink,
-            hwAcc: HwAcc.auto,
-            autoPlay: true,
-            options: VlcPlayerOptions(),
-          );
+              });
+            });
+
         }
       },
       builder: (context, state) {
-        if (state is LoadFilmLinkSuccessState) {
-          if (_videoPlayerController != null) {
-            _videoPlayerController!.addListener(() {
-              if (_videoPlayerController!.value.bufferPercent == 100) {
-                setState(() {});
+        if (state is LoadFilmLinkSuccessState ||
+            state is ChangeSeriesSuccessState) {
+          if (_controller != null) {
+            _controller!.addListener(() {
+              if (!_controller!.value.isBuffering) {
+                // setState(() {});
               }
-              if (_videoPlayerController != null) {
-                if(mounted){
+              if (_controller != null) {
+                if (mounted) {
                   BlocProvider.of<MovieBloc>(context).add(SeekBarUpdateEvent(
-                    _videoPlayerController!.value.duration.inSeconds,
-                    _videoPlayerController!.value.position.inSeconds,
+                    _controller!.value.duration.inSeconds,
+                    _controller!.value.position.inSeconds,
                   ));
                 }
-
               }
             });
             return Container(
                 color: Colors.black87.withOpacity(1),
+                margin: !isFullscreen ? EdgeInsets.only(right: 25) : null,
                 height: isFullscreen ? double.infinity : 360,
-                width: isFullscreen ? double.infinity : 640,
+                width: double.infinity,
                 child: Stack(children: [
                   const Center(
                       child: CircularProgressIndicator(color: Colors.white)),
-                  VlcPlayer(
-                    controller: _videoPlayerController!,
-                    aspectRatio: 16 / 9,
-                    placeholder: const Center(
-                        child: CircularProgressIndicator(color: Colors.white)),
+                  Center(
+                    child: AspectRatio(
+                      aspectRatio: _controller!.value.aspectRatio,
+                      child: VideoPlayer(_controller!),
+                    ),
                   ),
-                  StatefulBuilder(
-                      builder: (BuildContext context, StateSetter setState) {
-                    _timer ??=
-                        RestartableTimer(const Duration(seconds: 15), () {
-                      controllerVisibility = false;
-                      setState(() {});
-                    });
-                    activateController = () {
-                      _timer?.reset();
-                      if (!controllerVisibility) {
-                          controllerVisibility = true;
+                  BlocBuilder<MovieBloc, MovieState>(
+                    buildWhen: (context,state){
+                      if(state is VideoIsPausedState){
+                        return true;
                       }
-                    };
+                      return false;
+                    },
 
-                    return Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: Opacity(
-                          opacity: controllerVisibility ? 1 : 0,
-                          child: Container(
-                            width: double.infinity,
-                            color: Colors.transparent,
-                            child: Column(
-                              children: [
-                                Center(
-                                    child: MySeekBar(
-                                  vlcPlayerController: _videoPlayerController!,
-                                  enterButtonIntent: () {
-                                    if (controllerVisibility) {
-                                      if (_videoPlayerController!
-                                          .value.isPlaying) {
-                                        _videoPlayerController!.pause();
+  builder: (context, state) {
+    if(state is VideoIsPausedState){
+        return Visibility(
+          visible: state.isPaused,
+          child: Center(child: Icon(Icons.pause,color: Colors.white, shadows: <Shadow>[Shadow(color: Colors.black, blurRadius: 15.0)],
+            size: 60,)),
+        );
+    }
+   return const SizedBox();
+  },
+),
+                  Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Opacity(
+                        opacity: controllerVisibility ? 1 : 0,
+                        child: Container(
+                          width: double.infinity,
+                          color: Colors.transparent,
+                          child: Column(
+                            children: [
+                              Center(
+                                  child: MySeekBar(
+                                vlcPlayerController: _controller!,
+                                enterButtonIntent: () {
+                                  if (controllerVisibility) {
+                                    this.setState(() {
+                                      if (isFullscreen) {
+                                        isFullscreen = false;
                                       } else {
-                                        _videoPlayerController!.play();
+                                        isFullscreen = true;
                                       }
-                                    }
-                                    activateController();
-                                  },
-                                  leftButtonIntent: () {
-                                    rewind(-10);
-                                  },
-                                  downButtonIntent: () {
-                                    if (episodes != null) {
-                                      if (controllerVisibility) {
-                                        showDialog(
-                                            barrierDismissible: false,
-                                            context: context,
-                                            builder: (BuildContext context) =>
-                                                SeriesPopup(
-                                                  callback: (value) {
-                                                    BlocProvider.of<MovieBloc>(
-                                                            context)
-                                                        .add(ChangeSeriesEvent(
-                                                            value[0],
-                                                            value[1],
-                                                            movieId,
-                                                            translatorId));
-                                                  },
-                                                  episodes: episodes!,
-                                                ));
-                                      }
-                                    }
+                                    });
+                                  }
 
-                                    activateController();
-                                  },
-                                  upButtonIntent: () {
-                                    if (controllerVisibility) {
-                                      this.setState(() {
-                                        if (isFullscreen) {
-                                          isFullscreen = false;
-                                        } else {
-                                          isFullscreen = true;
-                                        }
-                                      });
+                                  activateController();
+                                },
+                                leftButtonIntent: () {
+                                  rewind(-20);
+                                },
+                                downButtonIntent: () {
+                                  if (controllerVisibility) {
+                                    if (_controller!.value.isPlaying) {
+                                      _controller!.pause();
+                                      BlocProvider.of<MovieBloc>(context).add(VideoIsPaused(true));
+                                    } else {
+                                      _controller!.play();
+                                      BlocProvider.of<MovieBloc>(context).add(VideoIsPaused(false));
                                     }
-                                    activateController();
-                                  },
-                                  rightButtonIntent: () {
-                                    rewind(10);
-                                  },
-                                )),
-                              ],
-                            ),
+                                  }
+
+
+                                  activateController();
+                                },
+                                upButtonIntent: () {
+                                  if (episodes != null) {
+                                    if (controllerVisibility) {
+                                      showDialog(
+                                          barrierDismissible: false,
+                                          context: context,
+                                          builder: (BuildContext context) =>
+                                              SeriesPopup(
+                                                callback: (value) {
+                                                  BlocProvider.of<MovieBloc>(
+                                                      context)
+                                                      .add(ChangeSeriesEvent(
+                                                      value[0],
+                                                      value[1],
+                                                      movieId,
+                                                      translatorId));
+                                                },
+                                                episodes: episodes!,
+                                              ));
+                                    }
+                                  }
+                                  activateController();
+                                },
+                                rightButtonIntent: () {
+                                  rewind(20);
+                                },
+                              )),
+                            ],
                           ),
-                        ));
-                  }),
+                        ),
+                      ))
                 ]));
           } else {
             return filmContainer(isFullscreen);
@@ -289,8 +350,8 @@ class _MoviePlayState extends State<MoviePlay> {
 
   void rewind(int seconds) {
     if (controllerVisibility) {
-      _videoPlayerController!.seekTo(Duration(
-          seconds: _videoPlayerController!.value.position.inSeconds + seconds));
+      _controller!.seekTo(
+          Duration(seconds: _controller!.value.position.inSeconds + seconds));
     }
     activateController();
   }
@@ -300,7 +361,9 @@ Widget filmContainer(bool isFullscreen) {
   return Container(
     color: Colors.black87.withOpacity(1),
     height: isFullscreen ? double.infinity : 360,
-    width: isFullscreen ? double.infinity : 640,
+    margin: !isFullscreen ? EdgeInsets.only(right: 25) : null,
+    width: double.infinity,
     child: const Center(child: CircularProgressIndicator(color: Colors.white)),
   );
 }
+

@@ -4,6 +4,8 @@ abstract class HomeState {}
 
 class HomeInitial extends HomeState {}
 class HomeBackButtonSuccessState extends HomeState{}
+class CheckAccessState extends HomeState{}
+
 class HomeBackButtonWarningState extends HomeState{}
 
 class CheckRegistrationState extends HomeState{
@@ -43,6 +45,11 @@ class ActionCategoryMovieOneState extends HomeState{}
 class ActionProfileSearchState extends HomeState{}
 class ActionMovieOneRowOneState extends HomeState{}
 class ActionMovieTwoCategoryThreeState extends HomeState{}
+class ActionMovieOneRecommendationsState extends HomeState{}
+class ActionRowOneRecommendationsState extends HomeState{}
+class ActionRowTwoRecommendationsState extends HomeState{}
+class ActionCategoryTwoRecommendationsState extends HomeState{}
+
 class ActionMovieThreeCategoryThreeState extends HomeState{}
 class ActionRowOneRowTwoState extends HomeState{}
 class ActionCategoryTwoMovieTwoState extends HomeState{}

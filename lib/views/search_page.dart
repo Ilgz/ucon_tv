@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:new_ucon/data/constants.dart';
 import 'package:new_ucon/utils/actionHandler.dart';
+import 'package:new_ucon/widgets/dialogs/access_alert_dialog.dart';
 import '../blocs/home/home_bloc.dart';
 import '../models/film_model.dart';
 import 'movie_play_page.dart';
@@ -19,8 +21,6 @@ class _SearchHomeState extends State<SearchHome> {
   int lastElement = 0;
  List<FocusNode> focusList=[];
  List<Film> movieList=[];
-
-
   @override
   Widget build(BuildContext context) {
     return HandleRemoteActionsWidget(
@@ -58,10 +58,17 @@ class _SearchHomeState extends State<SearchHome> {
                   },
                   builder: (context, state) {
 
-                    if(state is SearchMovieSuccessState){
+                    if(state is SearchMovieSuccessState&&movieList.isNotEmpty){
                       return GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 6, childAspectRatio: 120 / 200),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCountAndFixedHeight(
+                            crossAxisCount: 6,
+                            //crossAxisSpacing: 20,
+                            mainAxisSpacing: 20,
+                            crossAxisSpacing: 20,
+                            height: 260,
+                           ),
+                            // gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            // crossAxisCount: 6, childAspectRatotio: (itemWidth / itemHeight)),
                         controller: listScrollController,
                         scrollDirection: Axis.vertical,
                         itemCount: state.movieList.length,
@@ -276,22 +283,25 @@ class _SearchHomeState extends State<SearchHome> {
         BlocProvider.of<HomeBloc>(context).add(SearchActionMovieDownEvent(index));
       },
       enter: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => MoviePlay(film: item)));
+        if(UserAccount.hasAccess){
+          Navigator.push(context, MaterialPageRoute(builder: (context)=>MoviePlay(film: item)));
+        }else{
+          showDialog(context: context,builder: (_)=>AccessAlert());
+        }
       },
       left: () {
         BlocProvider.of<HomeBloc>(context).add(SearchActionMovieLeftEvent(index));
       },
-      child: Focus(
-        focusNode: focusList[index],
-        child: Card(
-          elevation: 5.0,
-          clipBehavior: Clip.antiAlias,
-          margin: (focusList[index].hasFocus)
-              ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
-              : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          color: Colors.transparent,
+      child: SizedBox(
+        width: 25,
+        height: 260,
+        child: Focus(
+          focusNode: focusList[index],
           child: Container(
+            margin: (
+                focusList[index].hasFocus)
+                ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
+                : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
                 border: (focusList[index].hasFocus)
                     ? Border.all(color: Colors.yellow, width: 3)
@@ -299,16 +309,22 @@ class _SearchHomeState extends State<SearchHome> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.network(
-                  item.imageLink,
-                  fit: BoxFit.fill,
-                  height: 190,
-                  width: double.infinity,
+                // const SizedBox(
+                //   height: 160,
+                //   width: double.infinity,
+                // ),
+                Expanded(
+                  child: Image.network(
+                    item.imageLink,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(5),
                   child: Text(
-                    item.name,
+                    item.name+"\n",
+                    
                     style: const TextStyle(color: Colors.white),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

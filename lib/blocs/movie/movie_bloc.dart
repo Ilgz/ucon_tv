@@ -22,9 +22,10 @@ class MovieBloc extends Bloc<MovieEvent, MovieState> {
     on<DisposeMovieEvent>(_disposeMovieEvent);
     on<SeekBarUpdateEvent>(_seekBarUpdateEvent);
     on<ChangeSeriesEvent>(_changeSeriesEvent);
+    on<VideoIsPaused>((event,emit)=>emit(VideoIsPausedState(event.isPaused)));
   }
   Future<void> _changeSeriesEvent (ChangeSeriesEvent event,Emitter<MovieState> emit)async{
-    List<String> stream=await getStream("initCDNSeriesEvents", event.movieId, event.translatorId, event.season, event.episode);
+    List<String> stream=await getStream("initCDNSeriesEvents", event.movieId, event.translatorId, event.season, event.episode,"");
    emit(ChangeSeriesSuccessState(stream[0]));
   }
   Future<void> _seekBarUpdateEvent(
@@ -79,14 +80,21 @@ class MovieBloc extends Bloc<MovieEvent, MovieState> {
   Future<void> _loadFilmLinkEvent(
       LoadFilmLinkEvent event, Emitter<MovieState> emit) async {
     emit(LoadFilmLinkLoadingState());
-    List<String> stream=await getDetails(event.filmLink);
-    String streamLink=stream[0];
-    if(stream[1]=="initCDNSeriesEvents"){
-      var episodes=await getEpisodes(stream[2], stream[3]);
-      emit(LoadFilmLinkSuccessState(filmLink: streamLink,episodes: episodes,movieId: stream[2],translatorId: stream[3]));
+    if(event.filmLink.contains(".html")){
+      List<String> streamData=await getDetails(event.filmLink);
+      String streamLink=streamData[0];
+      print(streamLink);
+      if(streamData[1]=="initCDNSeriesEvents"){
+        var episodes=await getEpisodes(streamData[2], streamData[3]);
+        emit(LoadFilmLinkSuccessState(filmLink: streamLink,episodes: episodes,movieId: streamData[2],translatorId: streamData[3],description: streamData.last));
+      }else{
+        emit(LoadFilmLinkSuccessState(filmLink: streamLink,movieId: streamData[2],translatorId: streamData[3],description: streamData.last));
+      }
     }else{
-      emit(LoadFilmLinkSuccessState(filmLink: streamLink,movieId: stream[2],translatorId: stream[3] ));
+      emit(LoadFilmLinkSuccessState(filmLink: event.filmLink,movieId: "",translatorId:"" ,description: ""));
+
     }
+
   }
   Future<List<int>> getEpisodes(String id,String translatorId) async{
     List<int> episodeList=[];
@@ -104,6 +112,7 @@ class MovieBloc extends Bloc<MovieEvent, MovieState> {
     late String translatorId;
     late String movieId;
     String  contentType="";
+    String description="";
     if(siteLink[0]=="/"){
       siteLink=rezkaServer+siteLink;
     }
@@ -118,8 +127,10 @@ class MovieBloc extends Bloc<MovieEvent, MovieState> {
           contentType='initCDNMoviesEvents';
         }
       }
+
     }
     );
+    description=html.getElementsByClassName("b-post__description_text").first.text;
     if(html.getElementById("translators-list") != null){
       translatorId=html.getElementById("translators-list")
       !.children.first.attributes['data-translator_id']!;
@@ -131,10 +142,10 @@ class MovieBloc extends Bloc<MovieEvent, MovieState> {
       movieId= tmp.split(',')[0].trim();
     }
     movieId=movieId.replaceAll("(", "");
-  return   getStream(contentType,movieId,translatorId,1,1);
+  return   getStream(contentType,movieId,translatorId,1,1,description);
 
   }
-  Future<List<String>> getStream(String contentType,String movieId,String translatorId,int season,int episode)async{
+  Future<List<String>> getStream(String contentType,String movieId,String translatorId,int season,int episode,String description)async{
     Map data=contentType=="initCDNMoviesEvents"?{'id': movieId, 'translator_id': translatorId, 'action': 'get_movie'}:{'id': movieId, 'translator_id': translatorId, 'season': season.toString(), 'episode': episode.toString(), 'action': 'get_stream'};
     final response = await http
         .post(Uri.parse("https://rezka.ag/ajax/get_cdn_series/"), body: data);
@@ -157,7 +168,7 @@ class MovieBloc extends Bloc<MovieEvent, MovieState> {
     utf8.decode(base64Decode(trashString)).split(",");
     String? finalLink;
     for (var element in finalString) {
-      if(element.split("[")[1].split("]")[0]=="720p"){
+      if(element.split("[")[1].split("]")[0]=="1080p"){
         finalLink=element.split("[")[1].split("]")[1].split(" or ")[1];
         break;
       }
@@ -165,6 +176,6 @@ class MovieBloc extends Bloc<MovieEvent, MovieState> {
     if(finalLink==null){
       finalLink=finalString.last.split("[")[1].split("]")[1].split(" or ")[1];
     }
-    return [finalLink,contentType,movieId,translatorId];
+    return [finalLink,contentType,movieId,translatorId,description];
   }
 }

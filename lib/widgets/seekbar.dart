@@ -3,12 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 import 'package:new_ucon/data/constants.dart';
 import 'package:new_ucon/utils/actionHandler.dart';
+import 'package:video_player/video_player.dart';
 
 import '../blocs/movie/movie_bloc.dart';
 
 
 class MySeekBar extends StatefulWidget {
-  VlcPlayerController vlcPlayerController;
+  VideoPlayerController vlcPlayerController;
   Function upButtonIntent;
   Function rightButtonIntent;
   Function leftButtonIntent;
@@ -20,9 +21,26 @@ class MySeekBar extends StatefulWidget {
 }
 
 class _MySeekBarState extends State<MySeekBar> {
+  FocusNode focusNode=FocusNode();
+  bool isFirst=true;
+  @override
+  void initState() {
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
+    if(isFirst){
+      FocusScope.of(context).requestFocus(focusNode);
+      isFirst=false;
+    }
     return  BlocBuilder<MovieBloc, MovieState>(
+      buildWhen: (context,state){
+        if(state is SeekBarUpdateState){
+          return true;
+        }else{
+          return false;
+        }
+      },
   builder: (context, state) {
       if(state is SeekBarUpdateState){
         return Row(
@@ -38,28 +56,32 @@ class _MySeekBarState extends State<MySeekBar> {
                   widget.upButtonIntent();
     },
                 down: (){
+                  print("down");
                   widget.downButtonIntent();
                 },
                 enter: (){
-widget.enterButtonIntent();
+                  print("enterPressed");
+                  print(focusNode.hasFocus);
+                  widget.enterButtonIntent();
                 },
                 right: (){
                   widget.rightButtonIntent();
                 },
                 left: (){
+                  print("leftPressed");
                   widget.leftButtonIntent();
                 },
 
                 child: Focus(
-                  focusNode: MoviePlayClass.seekBarFocus,
+                  focusNode: focusNode,
                   child: SliderTheme(
                     data: SliderThemeData(
-                        thumbShape: RoundSliderThumbShape(enabledThumbRadius: MoviePlayClass.seekBarFocus.hasFocus?9:7)),
+                        thumbShape: RoundSliderThumbShape(enabledThumbRadius: focusNode.hasFocus?9:7)),
                     child: Slider
                       ( value: state.currentPosition.toDouble(),
                       min: 0,
                       max: state.length.toDouble(),
-                     activeColor: MoviePlayClass.seekBarFocus.hasFocus?Colors.yellow:Colors.green,
+                     activeColor: focusNode.hasFocus?Colors.yellow:Colors.green,
                       inactiveColor: Colors.grey,
                       semanticFormatterCallback: (double newValue) {
                         return '${newValue.round()}';

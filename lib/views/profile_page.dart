@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:new_ucon/views/home_page.dart';
+import 'package:new_ucon/widgets/dialogs/change_player_dialog.dart';
+import 'package:restart_app/restart_app.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/constants.dart';
 import '../utils/actionHandler.dart';
@@ -48,16 +52,20 @@ class _ProfileState extends State<Profile> {
                                 down: () {
                                   _changeFocus(exitButtonFocus);
                                 },
-                                child: Focus(
+                                child:  Focus(
                                     focusNode: backButtonFocus,
-                                    child: CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor:
-                                          Colors.black.withOpacity(1),
-                                      child: Icon(Icons.arrow_back,
-                                          color: backButtonFocus!.hasFocus
-                                              ? Colors.orange
-                                              : Colors.white),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child:CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor:
+                                        backButtonFocus!.hasFocus?Colors.orange.withOpacity(1):Colors.black.withOpacity(1),
+                                        child: Icon(Icons.arrow_back,
+                                            color: backButtonFocus!.hasFocus
+                                                ? Colors.black
+                                                : Colors.white),
+
+                                      ),
                                     ))),
                             const SizedBox(
                               height: 10,
@@ -82,7 +90,7 @@ class _ProfileState extends State<Profile> {
                                           borderRadius:
                                               BorderRadius.circular(10)),
                                       width: double.infinity,
-                                      child: const Text("0709 872 197",
+                                      child: Text(UserAccount.phoneNumber.replaceAll("996", "0"),
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                               color: Color(0xffd8d8d8),
@@ -100,8 +108,8 @@ class _ProfileState extends State<Profile> {
                                                       BorderRadius.circular(
                                                           10)),
                                               width: double.infinity,
-                                              child: const Text(
-                                                "Ваш баланс 31 сом",
+                                              child:  Text(
+                                                "Ваш баланс ${UserAccount.balance} сом",
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
                                                     color: Color(0xffd8d8d8),
@@ -117,9 +125,12 @@ class _ProfileState extends State<Profile> {
                                                     barrierDismissible: false,
                                                     context: context,
                                                     builder: (BuildContext context) => QuitPopup(
-                                                        warningText: "Вы действительно хотите выйти?",
+                                                        warningText: "Вы действительно хотите выйти из текущей учетной записи?",
                                                         func: () async {
-
+                                                          final prefs =await  SharedPreferences.getInstance();
+                                                          await prefs.remove("server");
+                                                          await prefs.remove("phoneNumber");
+                                                          Restart.restartApp();
                                                         }));
                                               },
                                               up: () {
@@ -197,6 +208,9 @@ class _ProfileState extends State<Profile> {
                                     height: 20,
                                   ),
                                   ClickRemoteActionWidget(
+                                    enter: (){
+                                      showDialog(context: context, builder: (context)=>ChangePlayerPopup());
+                                    },
                                       up: () {
                                         _changeFocus(exitButtonFocus);
                                       },
@@ -208,8 +222,9 @@ class _ProfileState extends State<Profile> {
                                                           .hasFocus
                                                       ? Colors.orange
                                                       : Colors.black),
-                                              onPressed: () {},
-                                              child: Text("Поменять VPS-Сервер"
+                                              onPressed: () {
+                                              },
+                                              child: Text("Текущий плеер: ${UserAccount.isVlc?"VLC":"Native"}"
                                                   .toUpperCase()))))
                                 ],
                               ),
@@ -234,7 +249,7 @@ class _ProfileState extends State<Profile> {
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
                                 policy,
-                                textAlign: TextAlign.center,
+                                textAlign: TextAlign.start,
                                 overflow: TextOverflow.fade,
                                 style: const TextStyle(
                                   fontSize: 14,

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/category_list"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content">
+
+    <Button
+        android:id="@+id/All_category_list"
+        android:layout_width="300dp"
+
+
+        android:layout_height="wrap_content"
+
+
+        android:layout_marginTop="8dp"
+        android:background="@drawable/white_black"
+        android:text="Все каналы"
+        android:textAllCaps="false"
+        android:textColor="@color/black_white"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/news_category_list"
+        android:layout_width="300dp"
+
+
+        android:layout_height="wrap_content"
+
+
+        android:layout_marginTop="3dp"
+        android:background="@drawable/white_black"
+        android:text="Новостные"
+        android:textAllCaps="false"
+        android:textColor="@color/black_white"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/All_category_list" />
+
+    <Button
+        android:id="@+id/efir_list_category"
+        android:layout_width="300dp"
+
+
+        android:layout_height="wrap_content"
+
+
+        android:layout_marginTop="3dp"
+
+
+        android:background="@drawable/white_black"
+        android:text="Познавательные"
+        android:textAllCaps="false"
+        android:textColor="@color/black_white"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/child_list_category" />
+
+    <Button
+        android:id="@+id/kin_ser_category_list"
+        android:layout_width="300dp"
+
+
+        android:layout_height="wrap_content"
+
+
+        android:layout_marginTop="3dp"
+
+        android:background="@drawable/white_black"
+        android:text="Фильмы/Сериалы"
+        android:textAllCaps="false"
+        android:textColor="@color/black_white"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/news_category_list" />
+
+    <Button
+        android:id="@+id/child_list_category"
+        android:layout_width="300dp"
+
+
+        android:layout_height="wrap_content"
+
+
+        android:layout_marginTop="3dp"
+        android:background="@drawable/white_black"
+        android:text="Детские"
+        android:textAllCaps="false"
+        android:textColor="@color/black_white"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/music_list_category" />
+
+    <Button
+        android:id="@+id/sport_list_category"
+        android:layout_width="300dp"
+
+
+        android:layout_height="wrap_content"
+
+
+        android:layout_marginTop="3dp"
+
+        android:background="@drawable/white_black"
+        android:text="Спортивные"
+        android:textAllCaps="false"
+        android:textColor="@color/black_white"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/kin_ser_category_list" />
+
+    <Button
+        android:id="@+id/music_list_category"
+        android:layout_width="300dp"
+
+
+        android:layout_height="wrap_content"
+
+
+        android:layout_marginTop="3dp"
+
+        android:background="@drawable/white_black"
+        android:text="Музыкальные"
+        android:textAllCaps="false"
+        android:textColor="@color/black_white"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sport_list_category" />
+
+    <Button
+        android:id="@+id/international_category_list"
+        android:layout_width="300dp"
+
+
+        android:layout_height="wrap_content"
+
+
+        android:layout_marginTop="3dp"
+
+        android:background="@drawable/white_black"
+        android:text="Международные"
+        android:textAllCaps="false"
+        android:textColor="@color/black_white"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/efir_list_category" />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

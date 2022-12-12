@@ -15,12 +15,11 @@ class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
   late final  HomeBloc bloc;
   bool isFirst = true;
-
+  FocusNode sliderFocusNode=FocusNode();
   @override
   Widget build(BuildContext context) {
     if (isFirst) {
-      bloc = BlocProvider.of<HomeBloc>(context);
-      bloc.add(CheckRegistrationEvent());
+      bloc = BlocProvider.of<HomeBloc>(context)..add(CheckRegistrationEvent());
       isFirst = false;
     }
     return WillPopScope(
@@ -31,7 +30,7 @@ class HomePage extends StatelessWidget {
       child: HandleRemoteActionsWidget(
         child: BlocConsumer<HomeBloc, HomeState>(
           buildWhen: (context, state) {
-            if (state is CheckRegistrationState) {
+            if (state is LoadHomeDataSuccessState) {
               return true;
             } else {
               return false;
@@ -57,13 +56,37 @@ class HomePage extends StatelessWidget {
                       false, //if you want to disable back feature set to false
                 );
               } else {
-                bloc.add(LoadHomeDataEvent());
-                FocusScope.of(context).requestFocus(HomeClass.sliderFocus);
+                bloc.add(CheckAccessEvent());
+              }
+            }
+            else if(state is CheckAccessState){
+              bloc.add(LoadHomeDataEvent());
+              FocusScope.of(context).requestFocus(sliderFocusNode);
+            }
+            else  if (state is LoadHomeDataSuccessState) {
+              for (var element in HomeClass.movieElements) {
+                if (element.sectionName == "Фильмы") {
+                  element.elements = state.filmList;
+                  element.elementsFocus ??= List.generate(
+                      state.filmList.length, (index) => FocusNode());
+                } else if (element.sectionName == "Сериалы") {
+                  element.elements = state.serialList;
+                  element.elementsFocus ??= List.generate(
+                      state.serialList.length, (index) => FocusNode());
+                } else if (element.sectionName == "Премьеры") {
+                  element.elements = state.premierList;
+                  element.elementsFocus ??= List.generate(
+                      state.premierList.length, (index) => FocusNode());
+                } else if (element.sectionName == "Мультфильмы") {
+                  element.elements = state.cartoonList;
+                  element.elementsFocus ??= List.generate(
+                      state.cartoonList.length, (index) => FocusNode());
+                }
               }
             }
           },
           builder: (context, state) {
-            if (state is CheckRegistrationState) {
+            if (state is LoadHomeDataSuccessState) {
               return Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
@@ -86,19 +109,22 @@ class HomePage extends StatelessWidget {
                   body: buildPage(),
                 ),
               );
-            } else {
+            }else {
               return Container(
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                        image: Image.asset('assets/images/background_home.jpg')
+                        image: Image.asset('assets/images/splash_image.jpg')
                             .image,
                         fit: BoxFit.cover),
                   ),
                   child: const Scaffold(
                       backgroundColor: Colors.transparent,
                       body: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.red,
+                        child: Padding(
+                          padding: EdgeInsets.only(top:200),
+                          child: CircularProgressIndicator(
+                            color: Colors.yellow,
+                          ),
                         ),
                       )));
             }
@@ -111,7 +137,7 @@ class HomePage extends StatelessWidget {
   Widget buildPage() {
     return SingleChildScrollView(
       controller: HomeClass.pageController,
-      child: BlocConsumer<HomeBloc, HomeState>(
+      child: BlocBuilder<HomeBloc, HomeState>(
         buildWhen: (context, state) {
           if (state is LoadHomeDataSuccessState) {
             return true;
@@ -119,33 +145,10 @@ class HomePage extends StatelessWidget {
             return false;
           }
         },
-        listener: (context, state) {
-          if (state is LoadHomeDataSuccessState) {
-            for (var element in HomeClass.movieElements) {
-              if (element.sectionName == "Фильмы") {
-                element.elements = state.filmList;
-                element.elementsFocus ??= List.generate(
-                    state.filmList.length, (index) => FocusNode());
-              } else if (element.sectionName == "Сериалы") {
-                element.elements = state.serialList;
-                element.elementsFocus ??= List.generate(
-                    state.serialList.length, (index) => FocusNode());
-              } else if (element.sectionName == "Премьеры") {
-                element.elements = state.premierList;
-                element.elementsFocus ??= List.generate(
-                    state.premierList.length, (index) => FocusNode());
-              } else if (element.sectionName == "Мультфильмы") {
-                element.elements = state.cartoonList;
-                element.elementsFocus ??= List.generate(
-                    state.cartoonList.length, (index) => FocusNode());
-              }
-            }
-          }
-        },
         builder: (context, state) {
           if (state is LoadHomeDataSuccessState) {
             return Column(children: [
-              MySlider(),
+              MySlider(focusNode: sliderFocusNode,),
               ListViewMovie(movieElement: HomeClass.movieElements[0]),
               ListViewChannel(),
               ListViewMovie(movieElement: HomeClass.movieElements[1]),

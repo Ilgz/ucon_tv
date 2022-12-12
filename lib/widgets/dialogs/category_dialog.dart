@@ -28,14 +28,14 @@ class _CategoryDialogState extends State<CategoryDialog> {
          isFirst=false;
     }
     return Dialog(
-      backgroundColor: Colors.white70,
+      backgroundColor: Colors.lightBlue.shade900,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16.0))),
       child: Padding(
           padding: EdgeInsets.all(8),
           child: HandleRemoteActionsWidget(
             child: Container(
-              width: 400,
+              width: 500,
               child: ListView.builder(controller:scrollController,shrinkWrap:true,itemCount:producerList.length,itemBuilder: (BuildContext context,int index){
                 return ClickRemoteActionWidget(
                   down: (){
@@ -68,20 +68,18 @@ class _CategoryDialogState extends State<CategoryDialog> {
                     child:
                     Container(
                       decoration: BoxDecoration(border: Border(top: BorderSide())),
-                      child: Container(
-                        height: 60,
-                        child: ListTile(
-                            tileColor: producerFocusList[index].hasFocus?Colors.yellow:Colors.white70,
-                            leading: CircleAvatar(
-                              backgroundColor: const Color(0xff6ae792),
-                              child: Text(
-                                (index+1).toString(),
-                                style: TextStyle(color: Colors.black),
-                              ),
+                      child: ListTile(
+                          visualDensity: VisualDensity(vertical: -4),
+                          tileColor: producerFocusList[index].hasFocus?Colors.white:Colors.lightBlue.shade900,
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.transparent,
+                            child: Text(
+                              (index+1).toString(),
+                              style: TextStyle(color:producerFocusList[index].hasFocus?Colors.black:Colors.white),
                             ),
-                            // leading:  Icon(Icons.play_arrow_outlined,color: (seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.yellow:Colors.black,),
-                            title: Text(producerList[index].name,textAlign:TextAlign.start,style:TextStyle(color: Colors.black))),
-                      ),
+                          ),
+                          // leading:  Icon(Icons.play_arrow_outlined,color: (seasonIndex!=null?episodesFocusNode[index]:seasonsFocusNode[index]).hasFocus?Colors.yellow:Colors.black,),
+                          title: Text(producerList[index].name,textAlign:TextAlign.start,style:TextStyle(color:producerFocusList[index].hasFocus?Colors.black:Colors.white))),
                     )
                     ,
                   ),

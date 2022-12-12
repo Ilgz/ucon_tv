@@ -20,3 +20,7 @@ class SeekBarUpdateEvent extends MovieEvent{
   int currentPosition;
   SeekBarUpdateEvent(this.length,this.currentPosition);
 }
+class VideoIsPaused extends MovieEvent{
+  bool isPaused;
+  VideoIsPaused(this.isPaused);
+}

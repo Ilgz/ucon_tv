@@ -21,11 +21,10 @@ class Film {
   String imageLink;
   String siteLink;
   String details;
-
   factory Film.fromJson(Map<String, dynamic> json) => Film(
     name: json["Name"],
     imageLink: json["ImageLink"],
-    siteLink: json["SiteLink"],
+    siteLink: json["FilmLink"],
     details: json["Details"]
   );
 
